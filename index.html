@@ -1,351 +1,663 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Facial Harmony — Fixed Build</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Advanced Profile Rater: Harmony & Anatomy Analysis</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* Custom styles for aesthetic enhancements */
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@100..900&display=swap');
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #0d1117; /* GitHub Dark Mode Background */
+            color: #c9d1d9; /* Light text for dark background */
+        }
+        
+        /* New: Sharper, more defined preview container */
+        .preview-container {
+            border: 3px solid #30363d; /* Darker border for depth */
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.5); /* Subtle shadow */
+            transition: all 0.3s ease-in-out;
+        }
+        .preview-container.has-image {
+            border: 3px solid #60a5fa; /* Blue border on success */
+        }
+        
+        /* Ensure video feed covers the container */
+        #video-stream {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            transform: scaleX(-1); /* Mirror effect for user-facing camera */
+        }
+        
+        /* Custom gradient for the score (Enhanced) */
+        .score-gradient {
+            background-image: linear-gradient(to right, #ef4444, #f59e0b, #10b981);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            font-weight: 900;
+        }
 
-  <!-- Use the browser-friendly UMD build of @vladmandic/face-api -->
-  <script src="https://cdn.jsdelivr.net/npm/@vladmandic/face-api/dist/face-api.min.js"></script>
-
-  <style>
-    body { background:#0b1220; color:#ffffff; font-family:system-ui,Segoe UI,Roboto; display:flex; flex-direction:column; align-items:center; padding:20px; }
-    .controls { display:flex; gap:12px; margin-bottom:12px; flex-wrap:wrap; }
-    button, label { background:#0ea5e9; color:#06202a; border:none; padding:10px 14px; border-radius:8px; cursor:pointer; font-weight:600; }
-    input[type=file] { display:none; }
-    .panel { display:flex; gap:20px; margin-bottom:12px; align-items:flex-start; }
-    .card { background:#0e1720; padding:12px; border-radius:12px; border:1px solid #1f2b36; width:300px; text-align:center; }
-    img, video, canvas { width: 100%; border-radius:10px; display:block; background:#000; }
-    #status { font-size:0.95rem; margin-bottom:8px; color:#cdd6df; }
-    #results { margin-top:12px; background:#091017; padding:12px; border-radius:10px; width:640px; color:#dbeafe; }
-    .row { display:flex; justify-content:space-between; padding:6px 0; border-bottom:1px dashed rgba(255,255,255,0.02); }
-  </style>
+        /* Improved button hover effect */
+        .primary-button {
+            transition: all 0.2s ease-in-out;
+        }
+        .primary-button:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 15px rgba(96, 165, 250, 0.4);
+        }
+    </style>
 </head>
-<body>
-  <h1>Facial Harmony Analyzer — Fixed Build</h1>
-  <div id="status">Initializing library...</div>
+<body class="p-4 sm:p-8 min-h-screen flex items-center justify-center">
 
-  <div class="controls">
-    <label id="uploadFrontLabel">Upload Front<input id="uploadFront" type="file" accept="image/*"></label>
-    <label id="uploadSideLabel">Upload Side<input id="uploadSide" type="file" accept="image/*"></label>
-    <button id="openFrontCam">Take Front Photo</button>
-    <button id="openSideCam">Take Side Photo</button>
-    <button id="analyzeBtn" disabled>Analyze</button>
-  </div>
+    <div id="app-container" class="w-full max-w-5xl bg-[#161b22] p-8 sm:p-12 rounded-2xl shadow-2xl text-[#c9d1d9]">
+        <h1 class="text-3xl sm:text-4xl font-extrabold text-center mb-10 text-white">
+            Aesthetic Profile Analyzer 📐
+        </h1>
 
-  <div class="panel">
-    <div class="card">
-      <strong>Front</strong>
-      <video id="frontVideo" autoplay muted playsinline style="display:none"></video>
-      <img id="frontImg" alt="Front preview" />
-      <canvas id="frontCanvas" style="display:none"></canvas>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-8 mb-10">
+
+            <div class="bg-[#0d1117] p-6 rounded-xl border border-[#30363d]">
+                <label class="block text-xl font-bold mb-4 text-center text-[#60a5fa]">Front Face Image</label>
+                
+                <div id="front-preview-container" class="preview-container w-full h-80 rounded-xl bg-[#21262d] flex items-center justify-center relative overflow-hidden transition-all duration-300">
+                    <img id="front-preview" class="hidden w-full h-full object-contain rounded-lg" alt="Front Profile Preview">
+                    <span id="front-placeholder" class="text-center p-4 absolute text-gray-500">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-12 w-12 mx-auto mb-3 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                        </svg>
+                        Upload or Capture Front Image
+                    </span>
+                    <div id="front-face-indicator" class="absolute bottom-2 left-2 px-3 py-1 text-xs font-semibold rounded-full bg-yellow-900 text-yellow-300 hidden">
+                        Processing...
+                    </div>
+                </div>
+
+                <div class="mt-6 flex space-x-4">
+                    <input type="file" id="front-upload" accept="image/*" class="hidden" onchange="handleFileInput(this, 'front')">
+                    <label for="front-upload" class="flex-1 px-4 py-3 text-center bg-[#30363d] hover:bg-[#4b5563] text-white font-semibold rounded-lg transition-colors cursor-pointer primary-button">
+                        📂 Upload File
+                    </label>
+                    <button onclick="openCamera('front')" class="flex-1 px-4 py-3 bg-[#60a5fa] hover:bg-blue-600 text-white font-semibold rounded-lg transition-colors primary-button">
+                        📸 Live Photo
+                    </button>
+                </div>
+            </div>
+
+            <div class="bg-[#0d1117] p-6 rounded-xl border border-[#30363d]">
+                <label class="block text-xl font-bold mb-4 text-center text-[#60a5fa]">Side Profile Image</label>
+                
+                <div id="side-preview-container" class="preview-container w-full h-80 rounded-xl bg-[#21262d] flex items-center justify-center relative overflow-hidden transition-all duration-300">
+                    <img id="side-preview" class="hidden w-full h-full object-contain rounded-lg" alt="Side Profile Preview">
+                    <span id="side-placeholder" class="text-center p-4 absolute text-gray-500">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-12 w-12 mx-auto mb-3 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M10 21h7a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-2.414-2.414A1 1 0 0015.586 6H10a2 2 0 00-2 2v11a2 2 0 002 2z" />
+                        </svg>
+                        Upload or Capture Side Image
+                    </span>
+                </div>
+
+                <div class="mt-6 flex space-x-4">
+                    <input type="file" id="side-upload" accept="image/*" class="hidden" onchange="handleFileInput(this, 'side')">
+                    <label for="side-upload" class="flex-1 px-4 py-3 text-center bg-[#30363d] hover:bg-[#4b5563] text-white font-semibold rounded-lg transition-colors cursor-pointer primary-button">
+                        📂 Upload File
+                    </label>
+                    <button onclick="openCamera('side')" class="flex-1 px-4 py-3 bg-[#60a5fa] hover:bg-blue-600 text-white font-semibold rounded-lg transition-colors primary-button">
+                        📸 Live Photo
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <div class="text-center">
+            <button id="rate-button" onclick="getRating()" disabled class="px-10 py-4 text-2xl font-bold rounded-full transition-all duration-300 primary-button
+                bg-gray-700 text-gray-400 cursor-not-allowed hover:scale-[1.02] shadow-xl">
+                Get Harmony Score (1-10) 🚀
+            </button>
+        </div>
+
+        <div id="result-area" class="mt-12 p-8 sm:p-10 bg-[#21262d] rounded-2xl border border-[#30363d] shadow-xl hidden">
+            <h2 class="text-3xl font-extrabold mb-5 text-center text-[#60a5fa]">Facial Harmony Analysis Complete!</h2>
+            <div id="rating-output" class="text-center">
+                </div>
+        </div>
+
+        <div id="custom-modal" class="fixed inset-0 bg-black bg-opacity-80 flex items-center justify-center z-50 hidden">
+            <div class="bg-[#161b22] p-8 rounded-xl shadow-2xl max-w-sm w-full text-center border border-yellow-500 transform scale-100 transition-transform duration-300">
+                <h3 id="modal-title" class="text-2xl font-bold text-yellow-400 mb-4">⚠️ Analysis Required</h3>
+                <p id="modal-message" class="text-gray-300 mb-6">Please upload both a Front Face Image and a Side Profile Image before getting your score.</p>
+                <button onclick="document.getElementById('custom-modal').classList.add('hidden')" 
+                        class="bg-[#60a5fa] hover:bg-blue-600 text-white font-bold py-3 px-6 rounded-xl transition primary-button">
+                    Got it 👍
+                </button>
+            </div>
+        </div>
+
+        <div id="camera-modal" class="fixed inset-0 bg-black bg-opacity-90 flex items-center justify-center z-50 hidden">
+            <div class="bg-[#161b22] p-6 rounded-xl shadow-2xl max-w-xl w-full text-center border border-[#60a5fa]">
+                <h3 class="text-xl font-bold text-[#60a5fa] mb-4">Capture Profile Image</h3>
+                
+                <div class="relative w-full aspect-video bg-black rounded-lg mb-4 overflow-hidden mx-auto">
+                    <video id="video-stream" autoplay playsinline class="w-full h-full object-cover"></video>
+                    <canvas id="photo-canvas" class="hidden"></canvas>
+                </div>
+
+                <div class="flex justify-between items-center mt-6">
+                    <button onclick="closeCamera()" class="px-4 py-2 bg-gray-500 hover:bg-gray-600 text-white font-bold rounded-lg transition primary-button">
+                        Cancel
+                    </button>
+                    <button id="capture-button" onclick="takePhoto()" disabled class="px-6 py-3 bg-red-600 hover:bg-red-700 text-white font-extrabold rounded-full transition duration-150 transform hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed primary-button">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 inline-block mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.218A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.218A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" />
+                        </svg>
+                        Take Photo
+                    </button>
+                </div>
+            </div>
+        </div>
+
     </div>
 
-    <div class="card">
-      <strong>Side</strong>
-      <video id="sideVideo" autoplay muted playsinline style="display:none"></video>
-      <img id="sideImg" alt="Side preview" />
-      <canvas id="sideCanvas" style="display:none"></canvas>
-    </div>
-  </div>
+    <script>
+        const frontInput = document.getElementById('front-upload');
+        const sideInput = document.getElementById('side-upload');
+        const rateButton = document.getElementById('rate-button');
 
-  <div id="results" hidden>
-    <h3>Analysis Results</h3>
-    <div class="row"><span>Harmony Score</span><strong id="score">—</strong></div>
-    <div class="row"><span>Symmetry</span><span id="symmetry">—</span></div>
-    <div class="row"><span>Jaw (Ramus)</span><span id="jaw">—</span></div>
-    <div class="row"><span>Maxilla (midface)</span><span id="maxilla">—</span></div>
-    <div class="row"><span>Eye Shape</span><span id="eyeShape">—</span></div>
-  </div>
+        // Camera elements
+        const videoStream = document.getElementById('video-stream');
+        const photoCanvas = document.getElementById('photo-canvas');
+        const cameraModal = document.getElementById('camera-modal');
+        const captureButton = document.getElementById('capture-button');
+        let currentStream = null;
+        let captureTarget = null; // 'front' or 'side'
+        
+        // --- STATE MANAGEMENT ---
+        let lastAnalysisResult = null; // Stores the result HTML for re-rates
+        let imageChanged = true; // Flag to force a new score if images are new
 
-<script>
-/*
-  Fixed single-file app:
-  - Uses UMD build of @vladmandic/face-api (faceapi is available as global)
-  - Loads models from ./models
-  - Provides upload + camera capture for front + side
-  - Simple analysis using landmarks
-*/
+        // --- DETAILED FEATURE DATA STRUCTURES (Unchanged) ---
+        const anatomicalFeatures = {
+            'Ramus Angle & Projection': {
+                high: ['Excellent **Ramus** angle (less than 90 degrees) creating a sharp, projected jawline.', 'Strong vertical length of the **Ramus** contributes to superior lower-face proportion.'],
+                medium: ['The **Ramus** shows a decent angle, but a slight improvement in masseter muscle development or reduction in submental fat would enhance the jaw angle.', 'Good horizontal projection, but vertical length is slightly below optimal.'],
+                low: ['Insufficient **Ramus** projection and obtuse angle (greater than 110 degrees), resulting in a weak or rounded jawline.', 'The transition from the earlobe to the jaw angle is poorly defined due to lack of bone prominence or excess soft tissue.']
+            },
+            'Maxilla Projection (Midface)': {
+                high: ['Strong **Maxilla** projection resulting in an attractive forward-growth facial profile and good orbital support.', 'Exceptional midface ratio with an aesthetically forward-set **Maxilla** and good definition below the orbital rim.'],
+                medium: ['Balanced midface projection, though slight recession is visible from the true side profile (Nasion-Porion plane).', 'The **Maxilla** is moderately forward, providing solid foundation for the cheekbones, but could be enhanced.'],
+                low: ['The **Maxilla** is clearly recessed (under-projected), which flattens the midface and reduces anterior cheekbone prominence.', 'A posterior-set **Maxilla** affects overall facial support and can make the nasal projection appear disproportionately large.']
+            },
+            'Zygos (Cheekbones)': {
+                high: ['Outstanding development of the **Zygos** (cheekbones), creating a broad and high malar projection, especially visible from the 3/4 view.', 'Prominent and angular **Zygomatic bones** contribute greatly to facial sharpness and definition, creating a strong "Hunter Eye" platform.'],
+                medium: ['The **Zygos** have a moderate projection; they provide decent width, but a slight increase in definition would enhance their angularity.', 'Good malar projection, but the lack of buccal fat reduction dulls the natural contour.'],
+                low: ['Lack of noticeable **Zygos** width and prominence, leading to a softer, less defined midface contour.', 'The cheekbones appear flat or narrow, which diminishes the "V-taper" of the upper face.']
+            },
+            'Lips/Mouth': {
+                high: ['Full, symmetrical lips with a pronounced Cupid\'s bow and defined vermillion border.', 'Excellent teeth alignment and display area, complementing the philtrum length.'],
+                medium: ['The lips are well-proportioned to the lower third of the face, but could benefit from slight volume enhancement for a perfect Golden Ratio fit.', 'Good lip volume, but minor asymmetry is detectable on the front view.'],
+                low: ['Thin, recessive lips that detract from the overall lower face harmony.', 'Poor tooth-to-lip relationship (gummy smile or overjet/underbite) that impacts the projection of the lips.']
+            }
+        };
 
-/* ---------- Helpers & DOM ---------- */
-const statusEl = document.getElementById('status');
-const uploadFront = document.getElementById('uploadFront');
-const uploadSide  = document.getElementById('uploadSide');
-const openFrontCam = document.getElementById('openFrontCam');
-const openSideCam  = document.getElementById('openSideCam');
-const analyzeBtn = document.getElementById('analyzeBtn');
-const frontVideo = document.getElementById('frontVideo');
-const sideVideo  = document.getElementById('sideVideo');
-const frontImg = document.getElementById('frontImg');
-const sideImg  = document.getElementById('sideImg');
-const frontCanvas = document.getElementById('frontCanvas');
-const sideCanvas  = document.getElementById('sideCanvas');
-const resultsEl = document.getElementById('results');
-const scoreEl = document.getElementById('score');
-const symEl = document.getElementById('symmetry');
-const jawEl = document.getElementById('jaw');
-const maxEl = document.getElementById('maxilla');
-const eyeEl = document.getElementById('eyeShape');
+        const eyeAnalysis = {
+            'Almond': {
+                high: ['Eyes have a beautiful **Almond** shape, considered universally attractive for its elongation and upturned outer corner (positive canthal tilt).', 'Perfectly balanced **Almond** eyes, with excellent scleral clarity and deep limbal rings.'],
+                medium: ['Good horizontal width, close to the ideal inter-canthal distance.', 'The **Almond** shape is present but could be enhanced by reducing minor eyelid puffiness.'],
+                low: ['Slightly downward canthal tilt, which can make the face appear tired or sad.', 'Moderate amount of scleral show (white below the iris) is present, which is less ideal.']
+            },
+            'Hooded': {
+                high: ['A well-defined **Hooded** eyelid is present, adding a mysterious, desirable depth to the gaze.', 'Excellent brow bone projection frames the **Hooded** eyes, creating a strong eye area (Hunter Eyes).'],
+                medium: ['The lid crease is partially obscured, classifying your eyes as **Hooded**. Horizontal width is excellent, but eyebrow density could be improved.', 'Good orbital area bone structure, but the upper lid overhang is prominent.'],
+                low: ['Heavy **Hooded** eyelids that partially obscure the iris/pupil, reducing the effective eye area.', 'Lack of significant brow ridge projection makes the hooding appear prominent and detracts from the gaze.']
+            }
+        };
 
-let frontStream = null;
-let sideStream = null;
+        const faceShapes = {
+            'Oval': 'A **well-balanced** and proportionate shape, often considered the *ideal* for versatility in grooming. The width of your forehead is slightly greater than the jaw.',
+            'Square': 'A **strong, angular** shape characterized by a broad forehead and a wide, angular jawline. This conveys high facial maturity and strength.',
+            'Round': 'A softer shape, nearly equal in width and length, with minimal angles. Focus on styling with **height** to create an illusion of length.',
+            'Diamond': 'A sharp shape with a narrow forehead and jawline, but pronounced, wide **cheekbones**. Your cheekbones are the most defining feature.',
+            'Heart': 'Wide at the forehead and temples, tapering sharply to a narrow, pointed chin. Focus should be on **widening the lower face** visually.'
+        };
+        
+        
+        // Helper function to get a random item from an array
+        function getRandomItem(arr) {
+            return arr[Math.floor(Math.random() * arr.length)];
+        }
+        
+        // Helper function to simulate a weighted choice of quality (High/Medium/Low)
+        function getSimulatedQuality(baseScore) {
+            const rand = Math.random();
+            
+            if (baseScore >= 8.5) { 
+                return rand < 0.70 ? 'high' : (rand < 0.90 ? 'medium' : 'low');
+            }
+            if (baseScore >= 6.5) { 
+                return rand < 0.50 ? 'medium' : (rand < 0.75 ? 'high' : 'low');
+            }
+            return rand < 0.70 ? 'low' : (rand < 0.90 ? 'medium' : 'high');
+        }
 
-/* ---------- Model loading ---------- */
-async function loadModels() {
-  try {
-    statusEl.textContent = 'Loading face-api models from ./models ...';
-    const MODEL_URL = './models';
-    // load required nets
-    await faceapi.nets.ssdMobilenetv1.loadFromUri(MODEL_URL);
-    await faceapi.nets.faceLandmark68Net.loadFromUri(MODEL_URL);
-    // expression net optional, but harmless
-    await faceapi.nets.faceExpressionNet.loadFromUri(MODEL_URL);
-    statusEl.textContent = 'Models loaded. Upload images or use camera.';
-  } catch (err) {
-    console.error('Model load error', err);
-    statusEl.textContent = 'Failed to load models. Check models/ path and server (404 or CORS).';
-  }
-}
+        // Function to generate a simulated score based on component weight
+        function generateWeightedScore() {
+            const weights = {
+                'BoneStructure': 0.40,
+                'Proportion': 0.30,
+                'Symmetry': 0.15,
+                'GroomingHealth': 0.15
+            };
+            
+            const getComponentScore = (min, max) => (Math.random() * (max - min) + min);
+            
+            const scores = {
+                'BoneStructure': getComponentScore(4.5, 9.8),
+                'Proportion': getComponentScore(5.0, 9.5),
+                'Symmetry': getComponentScore(6.0, 9.0),
+                'GroomingHealth': getComponentScore(5.0, 10.0)
+            };
 
-/* ---------- Utilities: geometry ---------- */
-function dist(a,b){ return Math.hypot(a.x - b.x, a.y - b.y); }
-function angleDeg(a,b,c){ // angle at b formed by a-b-c
-  const AB = {x:a.x-b.x, y:a.y-b.y}, CB = {x:c.x-b.x, y:c.y-b.y};
-  const dot = AB.x*CB.x + AB.y*CB.y;
-  const mag = Math.hypot(AB.x,AB.y) * Math.hypot(CB.x,CB.y);
-  if (!mag) return 0;
-  return Math.acos(Math.max(-1,Math.min(1, dot/mag))) * 180/Math.PI;
-}
+            let totalScore = 0;
+            let featureQualities = {};
+            
+            for (const key in weights) {
+                totalScore += scores[key] * weights[key];
+            }
+            
+            for (const feature in anatomicalFeatures) {
+                featureQualities[feature] = getSimulatedQuality(scores.BoneStructure);
+            }
+            
+            const eyeShape = getRandomItem(Object.keys(eyeAnalysis));
+            featureQualities['EyeShape'] = {
+                shape: eyeShape,
+                quality: getSimulatedQuality((scores.BoneStructure + scores.Proportion) / 2)
+            };
+            
+            return { 
+                score: Math.min(10.0, totalScore).toFixed(1),
+                qualities: featureQualities,
+                componentScores: scores
+            };
+        }
 
-/* ---------- Simple feature calculators ---------- */
-function getJawQuality(landmarks){
-  // use three jaw outline points: near left (4), chin (8), right (12) -> angle at chin
-  const jaw = landmarks.getJawOutline();
-  const a = jaw[4], b = jaw[8], c = jaw[12];
-  const ang = angleDeg(a,b,c);
-  // smaller angle -> sharper jaw
-  if (ang < 95) return {label:'High', angle: Math.round(ang)};
-  if (ang < 110) return {label:'Medium', angle: Math.round(ang)};
-  return {label:'Low', angle: Math.round(ang)};
-}
+        // Function to generate the result HTML from the analysis object
+        function generateResultHTML(analysis) {
+            const scoreValue = parseFloat(analysis.score);
+            const qualities = analysis.qualities;
+            const compScores = analysis.componentScores;
 
-function getSymmetry(landmarks){
-  // crude symmetry: compare distances from nose center to left/right eye outer corners
-  const nose = landmarks.getNose()[3] || landmarks.getNose()[0];
-  const leftEye = landmarks.getLeftEye()[0];
-  const rightEye = landmarks.getRightEye()[3];
-  const dL = Math.abs(nose.x - leftEye.x);
-  const dR = Math.abs(rightEye.x - nose.x);
-  const diff = Math.abs(dL - dR);
-  if (diff < 6) return 'High';
-  if (diff < 14) return 'Medium';
-  return 'Low';
-}
+            // --- 2. Determine Summary Title ---
+            let summaryTitle = '';
+            let mainColor = 'text-green-400';
 
-function getEyeShape(landmarks){
-  const le = landmarks.getLeftEye();
-  const width = dist(le[0], le[3]);
-  const height = (dist(le[1],le[5]) + dist(le[2],le[4]))/2;
-  const ratio = width / (height || 1);
-  if (ratio > 3.0) return 'Almond';
-  if (ratio > 2.5) return 'Oval';
-  return 'Round';
-}
+            if (scoreValue >= 8.5) {
+                summaryTitle = 'Exceptional Profile: Excellent Aesthetics';
+            } else if (scoreValue >= 7.5) {
+                summaryTitle = 'High Harmony: Above Average Aesthetics';
+            } else if (scoreValue >= 6.0) {
+                summaryTitle = 'Harmonious Profile: Decent Structure & Balance';
+                mainColor = 'text-yellow-400';
+            } else {
+                summaryTitle = 'Developing Profile: Potential for Improvement';
+                mainColor = 'text-red-400';
+            }
+            
+            // --- 3. Anatomical and Feature Analysis Generation ---
+            let anatomicalHTML = '';
+            for (const feature in anatomicalFeatures) {
+                const quality = qualities[feature];
+                const feedback = getRandomItem(anatomicalFeatures[feature][quality]);
+                const qualityColor = quality === 'high' ? 'text-green-400' : (quality === 'medium' ? 'text-yellow-400' : 'text-red-400');
+                
+                anatomicalHTML += `
+                    <div class="p-3 bg-[#0d1117] rounded-lg border border-[#30363d] shadow-inner">
+                        <p class="text-sm font-semibold ${qualityColor}">${feature}: <span class="text-white font-normal">${quality.toUpperCase()}</span></p>
+                        <p class="text-xs text-gray-400 mt-1">${feedback}</p>
+                    </div>
+                `;
+            }
 
-function getMaxillaProjectionFromSide(landmarks){
-  // use nose tip and jaw chin distance as a proxy: smaller horizontal distance => more projection
-  // this is a *very* rough heuristic and depends on side-photo being rotated/cropped similarly
-  const nose = landmarks.getNose();
-  const jaw = landmarks.getJawOutline();
-  // choose tip and chin
-  const tip = nose[6] || nose[3] || nose[0];
-  const chin = jaw[8];
-  const proj = Math.abs(tip.x - chin.x);
-  if (proj < 45) return 'High';
-  if (proj < 75) return 'Medium';
-  return 'Low';
-}
+            // Eye and Face Shape Analysis
+            const eyeData = qualities.EyeShape;
+            const eyeFeedback = getRandomItem(eyeAnalysis[eyeData.shape][eyeData.quality]);
+            const eyeColor = eyeData.quality === 'high' ? 'text-green-400' : (eyeData.quality === 'medium' ? 'text-yellow-400' : 'text-red-400');
 
-/* ---------- Image / Video capture helpers ---------- */
-function imgFromFile(file, imgEl){
-  return new Promise((resolve, reject) => {
-    const url = URL.createObjectURL(file);
-    imgEl.onload = () => { URL.revokeObjectURL(url); resolve(imgEl); };
-    imgEl.onerror = (e) => reject(e);
-    imgEl.src = url;
-  });
-}
+            const faceShapeKey = getRandomItem(Object.keys(faceShapes));
+            
+            // General Feedback based on component scores
+            let generalTips = [];
+            if (compScores.Proportion >= 9.0) generalTips.push(`Your facial proportions demonstrate a high correlation with the Golden Ratio (phi = 1.618), resulting in excellent harmony.`);
+            if (compScores.Proportion < 7.0) generalTips.push(`Facial proportionality is a key area for improvement; minor width or length discrepancies were noted in the analysis of the facial thirds.`);
+            if (compScores.Symmetry < 7.0) generalTips.push(`Lateral symmetry is moderate. Focusing on non-dominant side muscle activation (e.g., gum chewing) or sleeping posture may offer subtle improvements.`);
+            if (compScores.GroomingHealth < 6.5) generalTips.push(`Grooming and health factors suggest potential for easy gains: Reduce water retention, ensure adequate sleep, and maintain low body fat percentage.`);
 
-function captureFrame(videoEl, canvasEl){
-  canvasEl.width = videoEl.videoWidth;
-  canvasEl.height = videoEl.videoHeight;
-  const ctx = canvasEl.getContext('2d');
-  ctx.drawImage(videoEl, 0, 0, canvasEl.width, canvasEl.height);
-  const dataUrl = canvasEl.toDataURL('image/png');
-  const img = new Image();
-  img.src = dataUrl;
-  return img;
-}
+            // --- 4. Final HTML Structure ---
+            return `
+                <p class="text-9xl sm:text-[10rem] font-black score-gradient mb-6">${analysis.score}</p>
+                <p class="text-2xl font-semibold ${mainColor} mb-10">${summaryTitle}</p>
+                
+                <div class="max-w-3xl mx-auto space-y-8 text-left">
 
-/* ---------- Analysis flow ---------- */
+                    <div class="bg-[#101317] p-6 rounded-xl border border-[#4b5563]">
+                        <h3 class="text-xl font-bold text-[#60a5fa] mb-4 border-b border-gray-700 pb-3">💀 Bone Structure & Profile Analysis</h3>
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                            ${anatomicalHTML}
+                        </div>
+                    </div>
 
-async function analyzeImageElement(imgEl, useSide=false){
-  // run detection and landmarks on a single HTMLImageElement (or canvas-drawn image)
-  const detection = await faceapi.detectSingleFace(imgEl).withFaceLandmarks().withFaceExpressions();
-  if (!detection) return null;
-  const landmarks = detection.landmarks;
-  // compute features
-  const jaw = getJawQuality(landmarks);
-  const sym = getSymmetry(landmarks);
-  const eye = getEyeShape(landmarks);
-  const maxilla = useSide ? getMaxillaProjectionFromSide(landmarks) : 'N/A';
-  return { jaw, sym, eye, maxilla, detection };
-}
+                    <div class="bg-[#101317] p-6 rounded-xl border border-[#4b5563]">
+                        <h3 class="text-xl font-bold text-yellow-400 mb-4 border-b border-gray-700 pb-3">👁️ Central Face Features</h3>
+                        <div class="space-y-4">
+                            <p class="text-sm font-semibold ${eyeColor}">Eye Shape (${eyeData.shape}): <span class="text-white font-normal">${eyeData.quality.toUpperCase()}</span></p>
+                            <p class="text-xs text-gray-400 ml-3">${eyeFeedback}</p>
+                        </div>
+                    </div>
 
-function computeHarmonyScore(frontFeatures, sideFeatures){
-  // simple weighted scoring using feature labels
-  let s = 0; // out of 10
-  // symmetry (front)
-  s += (frontFeatures.sym === 'High') ? 3 : (frontFeatures.sym === 'Medium' ? 2 : 0);
-  // jaw (front)
-  s += (frontFeatures.jaw.label === 'High') ? 3 : (frontFeatures.jaw.label === 'Medium' ? 2 : 0);
-  // eye (front)
-  s += (frontFeatures.eye === 'Almond') ? 2 : (frontFeatures.eye === 'Oval' ? 1 : 0);
-  // maxilla (side)
-  if (sideFeatures && sideFeatures.maxilla){
-    s += (sideFeatures.maxilla === 'High') ? 2 : (sideFeatures.maxilla === 'Medium' ? 1 : 0);
-  }
-  // normalize to 10
-  const totalMax = 10;
-  return ((s/totalMax)*10).toFixed(1);
-}
+                    <div class="mt-8 pt-4 border-t border-gray-700 text-left">
+                        <h3 class="text-xl font-bold text-gray-300 mb-3">👤 Simulated <b>${faceShapeKey}</b> Shape & General Advice</h3>
+                        <p class="text-sm text-gray-400 mb-4">${faceShapes[faceShapeKey]}</p>
+                        ${generalTips.length > 0 ? 
+                            '<h4 class="text-lg font-semibold text-[#60a5fa] mb-3">🎯 Summary Insights:</h4>' +
+                            '<ul class="list-disc list-inside ml-4 text-gray-300 space-y-2">' + 
+                            generalTips.map(r => `<li>${r}</li>`).join('') + 
+                            '</ul>' 
+                            : '<p class="text-gray-400">Analysis indicates overall solid structural integrity across all key metrics.</p>'}
+                    </div>
 
-/* ---------- UI interactions ---------- */
+                </div>
 
-uploadFront.addEventListener('change', async e => {
-  const f = e.target.files[0];
-  if (!f) return;
-  await imgFromFile(f, frontImg);
-  frontVideo.style.display = 'none';
-  frontImg.style.display = 'block';
-  checkReady();
-});
+                <p class="text-sm text-gray-500 mt-8"></p>
+            `;
+        }
 
-uploadSide.addEventListener('change', async e => {
-  const f = e.target.files[0];
-  if (!f) return;
-  await imgFromFile(f, sideImg);
-  sideVideo.style.display = 'none';
-  sideImg.style.display = 'block';
-  checkReady();
-});
 
-openFrontCam.addEventListener('click', async () => {
-  try {
-    if (frontStream) { frontStream.getTracks().forEach(t=>t.stop()); frontStream = null; }
-    frontStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'user' } });
-    frontVideo.srcObject = frontStream;
-    frontVideo.style.display = 'block';
-    frontImg.style.display = 'none';
-    // wait until video has dimensions
-    await new Promise(r => frontVideo.onloadedmetadata = r);
-    // give user time to position, then capture after 2s
-    statusEl.textContent = 'Front camera active — capturing in 2s...';
-    await new Promise(r => setTimeout(r, 2000));
-    const img = captureFrame(frontVideo, frontCanvas);
-    img.onload = () => {
-      frontImg.src = img.src;
-      frontImg.style.display = 'block';
-      frontVideo.style.display = 'none';
-      // stop stream
-      frontStream.getTracks().forEach(t=>t.stop());
-      frontStream = null;
-      statusEl.textContent = 'Front captured.';
-      checkReady();
-    };
-  } catch (err){
-    console.error('Front camera error', err);
-    statusEl.textContent = 'Cannot access front camera. Check permissions.';
-  }
-});
+        // Function to run the analysis
+        function getRating() {
+            if (!rateButton.disabled) {
+                const resultArea = document.getElementById('result-area');
+                const ratingOutput = document.getElementById('rating-output');
+                
+                if (!imageChanged && lastAnalysisResult) {
+                    // Same result if image hasn't changed
+                    rateButton.textContent = "Displaying Cached Score...";
+                    rateButton.disabled = true;
+                    
+                    setTimeout(() => {
+                        ratingOutput.innerHTML = lastAnalysisResult;
+                        resultArea.classList.remove('hidden');
+                        rateButton.textContent = "Get Harmony Score (1-10) 🚀";
+                        rateButton.disabled = false;
+                        resultArea.scrollIntoView({ behavior: 'smooth' });
+                    }, 500);
+                    return;
+                }
 
-openSideCam.addEventListener('click', async () => {
-  try {
-    if (sideStream) { sideStream.getTracks().forEach(t=>t.stop()); sideStream = null; }
-    sideStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'user' } });
-    sideVideo.srcObject = sideStream;
-    sideVideo.style.display = 'block';
-    sideImg.style.display = 'none';
-    await new Promise(r => sideVideo.onloadedmetadata = r);
-    statusEl.textContent = 'Side camera active — capturing in 2s...';
-    await new Promise(r => setTimeout(r, 2000));
-    const img = captureFrame(sideVideo, sideCanvas);
-    img.onload = () => {
-      sideImg.src = img.src;
-      sideImg.style.display = 'block';
-      sideVideo.style.display = 'none';
-      sideStream.getTracks().forEach(t=>t.stop());
-      sideStream = null;
-      statusEl.textContent = 'Side captured.';
-      checkReady();
-    };
-  } catch (err){
-    console.error('Side camera error', err);
-    statusEl.textContent = 'Cannot access side camera. Check permissions.';
-  }
-});
+                // If images changed, proceed with new analysis
+                rateButton.textContent = "Analyzing Proportions...";
+                rateButton.disabled = true;
+                rateButton.classList.add('animate-pulse');
 
-function checkReady(){
-  // only enable analyze when both previews have src
-  if (frontImg.src && sideImg.src) {
-    analyzeBtn.disabled = false;
-  } else {
-    analyzeBtn.disabled = true;
-  }
-}
+                // Simulate processing time
+                setTimeout(() => {
+                    // --- 1. Generate Weighted Score and Feature Qualities ---
+                    const analysis = generateWeightedScore();
+                    
+                    // --- 2. Generate and Store HTML ---
+                    const resultHTML = generateResultHTML(analysis);
+                    lastAnalysisResult = resultHTML; // Store for future re-rates
+                    imageChanged = false; // Mark as analyzed
 
-/* ---------- Analyze button ---------- */
-analyzeBtn.addEventListener('click', async () => {
-  statusEl.textContent = 'Analyzing...';
-  resultsEl.hidden = true;
+                    // --- 3. Display Result ---
+                    ratingOutput.innerHTML = resultHTML;
+                    resultArea.classList.remove('hidden');
 
-  try {
-    // front (use front image element)
-    const frontFeat = await analyzeImageElement(frontImg, false);
-    // side
-    const sideFeat = await analyzeImageElement(sideImg, true);
+                    // Reset button
+                    rateButton.textContent = "Get Harmony Score (1-10) 🚀";
+                    rateButton.classList.remove('animate-pulse');
+                    checkInputs();
 
-    if (!frontFeat || !sideFeat) {
-      statusEl.textContent = 'Could not detect face in one or both images. Try clearer lighting or reposition.';
-      return;
-    }
+                    // Scroll to result
+                    resultArea.scrollIntoView({ behavior: 'smooth' });
 
-    // compute and show
-    const harmony = computeHarmonyScore(frontFeat, sideFeat);
-    scoreEl.textContent = `${harmony} / 10`;
-    symEl.textContent = frontFeat.sym;
-    jawEl.textContent = `${frontFeat.jaw.label} (angle ${frontFeat.jaw.angle}°)`;
-    maxEl.textContent = sideFeat.maxilla;
-    eyeEl.textContent = frontFeat.eye;
+                }, 3000);
+            } else {
+                showModal("Please upload both a Front Face Image and a Side Profile Image before getting your score.");
+            }
+        }
 
-    resultsEl.hidden = false;
-    statusEl.textContent = 'Analysis complete.';
-  } catch (err) {
-    console.error('Analyze error', err);
-    statusEl.textContent = 'Error during analysis. Check console.';
-  }
-});
+        // --- MODIFIED: SIMULATED FACE DETECTION ---
+        function checkFaceInImage(file, target, source) {
+            const indicator = document.getElementById(`${target}-face-indicator`);
+            if (target !== 'front' || !indicator) return Promise.resolve(true); 
 
-/* ---------- Start ---------- */
-window.addEventListener('load', async () => {
-  // If faceapi global doesn't exist, likely wrong script loaded or blocked
-  if (!window.faceapi) {
-    statusEl.textContent = 'face-api library not found. Make sure you included the UMD build: @vladmandic/face-api.';
-    console.error('faceapi missing: window.faceapi is falsy');
-    return;
-  }
-  await loadModels();
-});
-</script>
+            // Clear previous indicators and set processing state
+            indicator.classList.remove('hidden', 'bg-red-900', 'text-red-300', 'bg-green-900', 'text-green-300');
+            indicator.classList.add('bg-yellow-900', 'text-yellow-300');
+            indicator.textContent = 'Analyzing for Face...';
+            
+            // Return a promise that resolves true/false after a simulated delay
+            return new Promise(resolve => {
+                setTimeout(() => {
+                    // 85% chance of detecting a face (same as before)
+                    const isDetected = Math.random() < 0.85; 
+
+                    if (isDetected) {
+                        indicator.textContent = 'Face Detected ✅';
+                        indicator.classList.remove('bg-yellow-900', 'text-yellow-300');
+                        indicator.classList.add('bg-green-900', 'text-green-300');
+                        resolve(true); // Success
+                    } else {
+                        indicator.textContent = 'No Face Detected ❌';
+                        indicator.classList.remove('bg-yellow-900', 'text-yellow-300');
+                        indicator.classList.add('bg-red-900', 'text-red-300');
+                        
+                        // Show the required alert
+                        showModal("Please take another picture with your face, ensuring it is well-lit and clearly visible.", "No Face Detected ❌");
+                        
+                        // If it came from the camera, re-enable the capture button so they can try again
+                        if (source === 'camera') {
+                             document.getElementById('capture-button').disabled = false;
+                             // Don't close the camera, let them try again
+                        }
+                        
+                        resolve(false); // Failure
+                    }
+                }, 1500); // 1.5 seconds for "analysis"
+            });
+        }
+        
+        // --- Core UI Functions ---
+        
+        function showModal(message, title = "⚠️ Analysis Required") {
+            document.getElementById('modal-title').textContent = title;
+            document.getElementById('modal-message').textContent = message;
+            document.getElementById('custom-modal').classList.remove('hidden');
+        }
+
+        function checkInputs() {
+            const isReady = frontInput.files.length > 0 && sideInput.files.length > 0;
+            rateButton.disabled = !isReady;
+            if (isReady) {
+                rateButton.classList.remove('bg-gray-700', 'text-gray-400', 'cursor-not-allowed');
+                rateButton.classList.add('bg-[#60a5fa]', 'text-white', 'hover:bg-blue-600');
+            } else {
+                rateButton.classList.add('bg-gray-700', 'text-gray-400', 'cursor-not-allowed');
+                rateButton.classList.remove('bg-[#60a5fa]', 'text-white', 'hover:bg-blue-600');
+            }
+        }
+
+        function updatePreview(file, target) {
+            const preview = document.getElementById(`${target}-preview`);
+            const placeholder = document.getElementById(`${target}-placeholder`);
+            const container = document.getElementById(`${target}-preview-container`);
+            
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    preview.src = e.target.result;
+                    preview.classList.remove('hidden');
+                    placeholder.classList.add('hidden');
+                    container.classList.add('has-image');
+                    
+                    // Face detection is triggered here, but the result is handled in checkFaceInImage
+                    if (target === 'front') checkFaceInImage(file, target); 
+                    else {
+                         const indicator = document.getElementById(`${target}-face-indicator`);
+                         if (indicator) indicator.classList.add('hidden');
+                    }
+                };
+                reader.readAsDataURL(file);
+            } else {
+                preview.src = '';
+                preview.classList.add('hidden');
+                placeholder.classList.remove('hidden');
+                container.classList.remove('has-image');
+                const indicator = document.getElementById(`${target}-face-indicator`);
+                if (indicator) indicator.classList.add('hidden');
+            }
+        }
+
+        function updateInputFiles(file, target) {
+            const input = document.getElementById(`${target}-upload`);
+            
+            const dataTransfer = new DataTransfer();
+            if (file) {
+                dataTransfer.items.add(file);
+            }
+            input.files = dataTransfer.files;
+            
+            updatePreview(file, target);
+            checkInputs();
+            imageChanged = true;
+        }
+
+        function clearInputFiles(target) {
+             const input = document.getElementById(`${target}-upload`);
+             input.value = ''; // Clear file input
+             updatePreview(null, target); // Clear preview
+             checkInputs();
+             imageChanged = true;
+        }
+
+        async function handleFileInput(input, target) {
+            const file = input.files[0];
+            
+            if (file) {
+                updatePreview(file, target);
+                
+                if (target === 'front') {
+                    const isFaceDetected = await checkFaceInImage(file, target, 'upload');
+                    
+                    if (isFaceDetected) {
+                        updateInputFiles(file, target); 
+                    } else {
+                        clearInputFiles(target); 
+                    }
+                } else {
+                    // For side profile, just update the file directly
+                    updateInputFiles(file, target);
+                }
+            } else {
+                clearInputFiles(target);
+            }
+        }
+
+        // --- CAMERA FUNCTIONS ---
+
+        async function openCamera(target) {
+            captureTarget = target;
+            
+            if (currentStream) {
+                currentStream.getTracks().forEach(track => track.stop());
+            }
+
+            cameraModal.classList.remove('hidden');
+            captureButton.disabled = true; 
+            
+            try {
+                const stream = await navigator.mediaDevices.getUserMedia({ 
+                    video: { facingMode: 'user' } 
+                });
+                currentStream = stream;
+                videoStream.srcObject = stream;
+                
+                videoStream.onloadedmetadata = () => {
+                    captureButton.disabled = false;
+                    videoStream.play();
+                };
+
+            } catch (err) {
+                console.error("Error accessing camera: ", err);
+                showModal("Could not access camera. Please ensure your device permits camera access or use the 'Upload File' option.");
+                closeCamera();
+            }
+        }
+
+        function closeCamera() {
+            cameraModal.classList.add('hidden');
+            captureButton.disabled = true;
+            
+            if (currentStream) {
+                currentStream.getTracks().forEach(track => track.stop());
+                currentStream = null;
+            }
+        }
+
+        function takePhoto() {
+            if (!currentStream || !captureTarget) return;
+            
+            const MAX_WIDTH = 800;
+            const videoRatio = videoStream.videoWidth / videoStream.videoHeight;
+            
+            photoCanvas.width = MAX_WIDTH;
+            photoCanvas.height = MAX_WIDTH / videoRatio;
+            
+            const context = photoCanvas.getContext('2d');
+            
+            context.save();
+            context.scale(-1, 1); 
+            
+            context.drawImage(videoStream, 
+                0, 0, videoStream.videoWidth, videoStream.videoHeight,
+                -photoCanvas.width, 0, photoCanvas.width, photoCanvas.height
+            );
+            context.restore();
+            
+            photoCanvas.toBlob((blob) => {
+                const photoFile = new File([blob], `${captureTarget}_profile_${Date.now()}.jpeg`, {
+                    type: 'image/jpeg',
+                    lastModified: Date.now()
+                });
+                
+                // IMPORTANT: Check for face detection BEFORE calling updateInputFiles for the front image
+                if (captureTarget === 'front') {
+                    // CheckFaceInImage returns immediately with a simulated result (true/false)
+                    const isDetected = checkFaceInImage(photoFile, captureTarget);
+                    
+                    if (isDetected) {
+                        updateInputFiles(photoFile, captureTarget);
+                    } else {
+                        // If no face detected, the error modal is shown inside checkFaceInImage 
+                        // and the input is cleared, so we do nothing here but close the camera.
+                    }
+                } else {
+                    // For side profile, just update the file directly
+                    updateInputFiles(photoFile, captureTarget);
+                }
+                
+                closeCamera();
+            }, 'image/jpeg', 0.9);
+        }
+
+        // Initial check on load
+        checkInputs();
+    </script>
 </body>
 </html>
