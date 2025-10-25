@@ -3,272 +3,139 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Facial Harmony Analyzer</title>
-
-  <script defer src="https://cdn.jsdelivr.net/npm/@vladmandic/face-api/dist/face-api.min.js"></script>
-
+  <title>Face Analyzer</title>
+  <script defer src="https://cdn.jsdelivr.net/npm/face-api.js"></script>
   <style>
     body {
-      background: linear-gradient(135deg, #111, #222);
-      font-family: "Segoe UI", sans-serif;
-      color: white;
       display: flex;
       flex-direction: column;
       align-items: center;
-      padding: 40px;
+      background: #0f172a;
+      color: #fff;
+      font-family: Arial, sans-serif;
+      height: 100vh;
+      justify-content: center;
+      text-align: center;
     }
-    h1 { font-size: 2em; margin-bottom: 20px; }
-    input { display: none; }
-    label, .camera-btn {
-      border: 2px solid #666;
-      padding: 10px 20px;
-      border-radius: 10px;
-      cursor: pointer;
-      margin: 10px;
-      transition: 0.2s;
-    }
-    label:hover, .camera-btn:hover { border-color: #0ff; color: #0ff; }
-    #images {
-      display: flex;
-      gap: 20px;
-      margin: 20px;
-    }
-    img {
-      width: 220px;
-      height: 220px;
-      object-fit: cover;
-      border-radius: 15px;
-      border: 2px solid #333;
-      background: #000;
-    }
-    video {
-      width: 220px;
-      height: 220px;
-      border-radius: 15px;
-      border: 2px solid #333;
-      display: none;
+    video, canvas, img {
+      border-radius: 12px;
+      margin-top: 12px;
+      max-width: 90%;
     }
     button {
-      background: #0ff;
-      color: #000;
-      padding: 10px 30px;
+      margin: 8px;
+      padding: 10px 20px;
+      font-size: 1rem;
       border: none;
-      border-radius: 10px;
-      font-size: 1.1em;
+      border-radius: 6px;
+      background-color: #2563eb;
+      color: white;
       cursor: pointer;
-      transition: 0.2s;
     }
-    button:hover { background: #00ffaa; }
-    #results {
-      margin-top: 40px;
-      background: rgba(255, 255, 255, 0.1);
-      border-radius: 15px;
-      padding: 20px 40px;
-      max-width: 600px;
-      display: none;
-    }
-    .row {
-      display: flex;
-      justify-content: space-between;
-      margin: 5px 0;
+    button:hover {
+      background-color: #1d4ed8;
     }
   </style>
 </head>
-
 <body>
-  <h1>Facial Harmony Analyzer</h1>
+  <h1>Face Analyzer</h1>
+  <p id="status">Loading models...</p>
 
-  <div id="images">
-    <div>
-      <label for="front-input">Upload Front Image</label><br />
-      <button class="camera-btn" id="front-camera-btn">📸 Take Front Photo</button><br />
-      <input id="front-input" type="file" accept="image/*" />
-      <video id="front-video"></video>
-      <img id="front-preview" />
-    </div>
-
-    <div>
-      <label for="side-input">Upload Side Image</label><br />
-      <button class="camera-btn" id="side-camera-btn">📸 Take Side Photo</button><br />
-      <input id="side-input" type="file" accept="image/*" />
-      <video id="side-video"></video>
-      <img id="side-preview" />
-    </div>
+  <div>
+    <button id="startCamera">📷 Use Live Camera</button>
+    <input type="file" id="upload" accept="image/*">
   </div>
 
-  <button id="analyze-btn">Analyze</button>
-
-  <div id="results">
-    <h2>Analysis Results</h2>
-    <div class="row"><span>Facial Symmetry:</span><span id="symmetry"></span></div>
-    <div class="row"><span>Jawline Sharpness:</span><span id="jaw"></span></div>
-    <div class="row"><span>Maxilla Projection:</span><span id="maxilla"></span></div>
-    <div class="row"><span>Eye Shape:</span><span id="eye"></span></div>
-    <div class="row"><span>Harmony Score:</span><span id="score"></span></div>
-  </div>
+  <video id="video" width="640" height="480" autoplay muted></video>
+  <canvas id="overlay" width="640" height="480"></canvas>
+  <img id="photo" hidden />
 
   <script>
-    const frontInput = document.getElementById('front-input');
-    const sideInput = document.getElementById('side-input');
-    const frontPreview = document.getElementById('front-preview');
-    const sidePreview = document.getElementById('side-preview');
-    const frontVideo = document.getElementById('front-video');
-    const sideVideo = document.getElementById('side-video');
-    const frontCamBtn = document.getElementById('front-camera-btn');
-    const sideCamBtn = document.getElementById('side-camera-btn');
-    const analyzeBtn = document.getElementById('analyze-btn');
-    const resultsDiv = document.getElementById('results');
+    const video = document.getElementById('video');
+    const overlay = document.getElementById('overlay');
+    const upload = document.getElementById('upload');
+    const photo = document.getElementById('photo');
+    const status = document.getElementById('status');
+    const startCameraBtn = document.getElementById('startCamera');
 
-    frontInput.onchange = e => previewImage(e.target.files[0], frontPreview);
-    sideInput.onchange = e => previewImage(e.target.files[0], sidePreview);
-
-    async function previewImage(file, previewEl) {
-      if (file) previewEl.src = URL.createObjectURL(file);
-    }
-
-    // ---- Camera Capture ----
-    async function startCamera(videoEl, previewEl) {
-      const stream = await navigator.mediaDevices.getUserMedia({ video: true });
-      videoEl.srcObject = stream;
-      videoEl.style.display = "block";
-      videoEl.play();
-
-      // Wait a moment to focus, then capture a frame
-      setTimeout(() => capturePhoto(videoEl, previewEl, stream), 3000);
-    }
-
-    function capturePhoto(videoEl, previewEl, stream) {
-      const canvas = document.createElement('canvas');
-      canvas.width = videoEl.videoWidth;
-      canvas.height = videoEl.videoHeight;
-      const ctx = canvas.getContext('2d');
-      ctx.drawImage(videoEl, 0, 0);
-      previewEl.src = canvas.toDataURL('image/png');
-      previewEl.style.display = "block";
-      videoEl.style.display = "none";
-      stream.getTracks().forEach(track => track.stop());
-    }
-
-    frontCamBtn.onclick = () => startCamera(frontVideo, frontPreview);
-    sideCamBtn.onclick = () => startCamera(sideVideo, sidePreview);
-
-    // ---- Face API Setup ----
     async function loadModels() {
-      await faceapi.nets.ssdMobilenetv1.loadFromUri('./models');
-      await faceapi.nets.faceLandmark68Net.loadFromUri('./models');
-      await faceapi.nets.faceExpressionNet.loadFromUri('./models');
+      const MODEL_URL = './models'; // 👈 relative path
+      status.textContent = 'Loading models...';
+
+      await Promise.all([
+        faceapi.nets.ssdMobilenetv1.loadFromUri(MODEL_URL),
+        faceapi.nets.faceLandmark68Net.loadFromUri(MODEL_URL),
+        faceapi.nets.faceExpressionNet.loadFromUri(MODEL_URL)
+      ]);
+
+      status.textContent = 'Models loaded. Choose camera or upload a photo.';
     }
 
-    function distance(p1, p2) {
-      return Math.sqrt((p1.x - p2.x) ** 2 + (p1.y - p2.y) ** 2);
-    }
-    function calculateAngle(a, b, c) {
-      const ab = { x: b.x - a.x, y: b.y - a.y };
-      const cb = { x: b.x - c.x, y: b.y - c.y };
-      const dot = ab.x * cb.x + ab.y * cb.y;
-      const magAB = Math.sqrt(ab.x ** 2 + ab.y ** 2);
-      const magCB = Math.sqrt(cb.x ** 2 + cb.y ** 2);
-      const angle = Math.acos(dot / (magAB * magCB));
-      return (angle * 180) / Math.PI;
-    }
-
-    function getJawAngle(landmarks) {
-      const jaw = landmarks.getJawOutline();
-      const angle = calculateAngle(jaw[4], jaw[8], jaw[12]);
-      if (angle < 90) return "High";
-      if (angle < 110) return "Medium";
-      return "Low";
+    async function startCamera() {
+      try {
+        const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+        video.srcObject = stream;
+        video.onplay = () => analyzeVideo();
+        status.textContent = 'Camera started. Analyzing...';
+      } catch (err) {
+        console.error('Camera error:', err);
+        status.textContent = 'Camera access denied or not available.';
+      }
     }
 
-    function getFacialSymmetry(landmarks) {
-      const leftEye = landmarks.getLeftEye();
-      const rightEye = landmarks.getRightEye();
-      const nose = landmarks.getNose()[0];
-      const diff = Math.abs(leftEye[0].x - (nose.x - (rightEye[3].x - nose.x)));
-      if (diff < 10) return "High";
-      if (diff < 20) return "Medium";
-      return "Low";
+    async function analyzeVideo() {
+      const displaySize = { width: video.width, height: video.height };
+      faceapi.matchDimensions(overlay, displaySize);
+
+      setInterval(async () => {
+        const detections = await faceapi
+          .detectAllFaces(video)
+          .withFaceLandmarks()
+          .withFaceExpressions();
+
+        const resized = faceapi.resizeResults(detections, displaySize);
+        overlay.getContext('2d').clearRect(0, 0, overlay.width, overlay.height);
+        faceapi.draw.drawDetections(overlay, resized);
+        faceapi.draw.drawFaceLandmarks(overlay, resized);
+        faceapi.draw.drawFaceExpressions(overlay, resized);
+      }, 300);
     }
 
-    function getEyeShape(landmarks) {
-      const leftEye = landmarks.getLeftEye();
-      const width = distance(leftEye[0], leftEye[3]);
-      const height = distance(leftEye[1], leftEye[5]);
-      const ratio = width / height;
-      if (ratio > 3.0) return "Almond";
-      if (ratio > 2.5) return "Oval";
-      return "Round";
-    }
+    upload.addEventListener('change', async () => {
+      const file = upload.files[0];
+      if (!file) return;
 
-    function getMaxillaProjection(landmarks) {
-      const nose = landmarks.getNose();
-      const jaw = landmarks.getJawOutline();
-      const proj = distance(nose[6], jaw[8]);
-      if (proj < 70) return "High";
-      if (proj < 90) return "Medium";
-      return "Low";
-    }
+      status.textContent = 'Analyzing photo...';
+      const img = await faceapi.bufferToImage(file);
+      photo.src = img.src;
+      photo.hidden = false;
+      video.hidden = true;
+      overlay.hidden = true;
 
-    function computeHarmonyScore(data) {
-      let score = 0;
-      if (data.symmetry === "High") score += 3;
-      if (data.jaw === "High") score += 3;
-      if (data.maxilla === "High") score += 2;
-      if (data.eye === "Almond") score += 2;
-      return (score / 10 * 10).toFixed(1);
-    }
-
-    async function analyzeFace(imageElement) {
-      const detection = await faceapi.detectSingleFace(imageElement)
+      const detections = await faceapi
+        .detectAllFaces(photo)
         .withFaceLandmarks()
         .withFaceExpressions();
-      if (!detection) return null;
-      const landmarks = detection.landmarks;
-      return {
-        symmetry: getFacialSymmetry(landmarks),
-        jaw: getJawAngle(landmarks),
-        maxilla: getMaxillaProjection(landmarks),
-        eye: getEyeShape(landmarks)
-      };
-    }
 
-    analyzeBtn.onclick = async () => {
-      if (!frontPreview.src || !sidePreview.src) {
-        alert("Please upload or take both front and side images.");
-        return;
-      }
-      analyzeBtn.textContent = "Analyzing...";
-      resultsDiv.style.display = "none";
-
-      const frontData = await analyzeFace(frontPreview);
-      const sideData = await analyzeFace(sidePreview);
-
-      if (!frontData || !sideData) {
-        alert("Could not detect face in one or both images.");
-        analyzeBtn.textContent = "Analyze";
+      if (detections.length === 0) {
+        status.textContent = 'No face detected.';
         return;
       }
 
-      const avgData = {
-        symmetry: frontData.symmetry,
-        jaw: frontData.jaw,
-        maxilla: sideData.maxilla,
-        eye: frontData.eye
-      };
+      const canvas = faceapi.createCanvasFromMedia(photo);
+      document.body.append(canvas);
+      const displaySize = { width: photo.width, height: photo.height };
+      faceapi.matchDimensions(canvas, displaySize);
+      const resized = faceapi.resizeResults(detections, displaySize);
+      faceapi.draw.drawDetections(canvas, resized);
+      faceapi.draw.drawFaceLandmarks(canvas, resized);
+      faceapi.draw.drawFaceExpressions(canvas, resized);
+      status.textContent = 'Photo analysis complete!';
+    });
 
-      const harmony = computeHarmonyScore(avgData);
+    startCameraBtn.addEventListener('click', startCamera);
 
-      document.getElementById('symmetry').textContent = avgData.symmetry;
-      document.getElementById('jaw').textContent = avgData.jaw;
-      document.getElementById('maxilla').textContent = avgData.maxilla;
-      document.getElementById('eye').textContent = avgData.eye;
-      document.getElementById('score').textContent = harmony + " / 10";
-
-      resultsDiv.style.display = "block";
-      analyzeBtn.textContent = "Analyze Again";
-    };
-
-    window.addEventListener('load', loadModels);
+    loadModels();
   </script>
 </body>
 </html>
