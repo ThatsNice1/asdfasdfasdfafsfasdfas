@@ -1,141 +1,351 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Face Analyzer</title>
-  <script defer src="https://cdn.jsdelivr.net/npm/face-api.js"></script>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Facial Harmony — Fixed Build</title>
+
+  <!-- Use the browser-friendly UMD build of @vladmandic/face-api -->
+  <script src="https://cdn.jsdelivr.net/npm/@vladmandic/face-api/dist/face-api.min.js"></script>
+
   <style>
-    body {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      background: #0f172a;
-      color: #fff;
-      font-family: Arial, sans-serif;
-      height: 100vh;
-      justify-content: center;
-      text-align: center;
-    }
-    video, canvas, img {
-      border-radius: 12px;
-      margin-top: 12px;
-      max-width: 90%;
-    }
-    button {
-      margin: 8px;
-      padding: 10px 20px;
-      font-size: 1rem;
-      border: none;
-      border-radius: 6px;
-      background-color: #2563eb;
-      color: white;
-      cursor: pointer;
-    }
-    button:hover {
-      background-color: #1d4ed8;
-    }
+    body { background:#0b1220; color:#ffffff; font-family:system-ui,Segoe UI,Roboto; display:flex; flex-direction:column; align-items:center; padding:20px; }
+    .controls { display:flex; gap:12px; margin-bottom:12px; flex-wrap:wrap; }
+    button, label { background:#0ea5e9; color:#06202a; border:none; padding:10px 14px; border-radius:8px; cursor:pointer; font-weight:600; }
+    input[type=file] { display:none; }
+    .panel { display:flex; gap:20px; margin-bottom:12px; align-items:flex-start; }
+    .card { background:#0e1720; padding:12px; border-radius:12px; border:1px solid #1f2b36; width:300px; text-align:center; }
+    img, video, canvas { width: 100%; border-radius:10px; display:block; background:#000; }
+    #status { font-size:0.95rem; margin-bottom:8px; color:#cdd6df; }
+    #results { margin-top:12px; background:#091017; padding:12px; border-radius:10px; width:640px; color:#dbeafe; }
+    .row { display:flex; justify-content:space-between; padding:6px 0; border-bottom:1px dashed rgba(255,255,255,0.02); }
   </style>
 </head>
 <body>
-  <h1>Face Analyzer</h1>
-  <p id="status">Loading models...</p>
+  <h1>Facial Harmony Analyzer — Fixed Build</h1>
+  <div id="status">Initializing library...</div>
 
-  <div>
-    <button id="startCamera">📷 Use Live Camera</button>
-    <input type="file" id="upload" accept="image/*">
+  <div class="controls">
+    <label id="uploadFrontLabel">Upload Front<input id="uploadFront" type="file" accept="image/*"></label>
+    <label id="uploadSideLabel">Upload Side<input id="uploadSide" type="file" accept="image/*"></label>
+    <button id="openFrontCam">Take Front Photo</button>
+    <button id="openSideCam">Take Side Photo</button>
+    <button id="analyzeBtn" disabled>Analyze</button>
   </div>
 
-  <video id="video" width="640" height="480" autoplay muted></video>
-  <canvas id="overlay" width="640" height="480"></canvas>
-  <img id="photo" hidden />
+  <div class="panel">
+    <div class="card">
+      <strong>Front</strong>
+      <video id="frontVideo" autoplay muted playsinline style="display:none"></video>
+      <img id="frontImg" alt="Front preview" />
+      <canvas id="frontCanvas" style="display:none"></canvas>
+    </div>
 
-  <script>
-    const video = document.getElementById('video');
-    const overlay = document.getElementById('overlay');
-    const upload = document.getElementById('upload');
-    const photo = document.getElementById('photo');
-    const status = document.getElementById('status');
-    const startCameraBtn = document.getElementById('startCamera');
+    <div class="card">
+      <strong>Side</strong>
+      <video id="sideVideo" autoplay muted playsinline style="display:none"></video>
+      <img id="sideImg" alt="Side preview" />
+      <canvas id="sideCanvas" style="display:none"></canvas>
+    </div>
+  </div>
 
-    async function loadModels() {
-      const MODEL_URL = './models'; // 👈 relative path
-      status.textContent = 'Loading models...';
+  <div id="results" hidden>
+    <h3>Analysis Results</h3>
+    <div class="row"><span>Harmony Score</span><strong id="score">—</strong></div>
+    <div class="row"><span>Symmetry</span><span id="symmetry">—</span></div>
+    <div class="row"><span>Jaw (Ramus)</span><span id="jaw">—</span></div>
+    <div class="row"><span>Maxilla (midface)</span><span id="maxilla">—</span></div>
+    <div class="row"><span>Eye Shape</span><span id="eyeShape">—</span></div>
+  </div>
 
-      await Promise.all([
-        faceapi.nets.ssdMobilenetv1.loadFromUri(MODEL_URL),
-        faceapi.nets.faceLandmark68Net.loadFromUri(MODEL_URL),
-        faceapi.nets.faceExpressionNet.loadFromUri(MODEL_URL)
-      ]);
+<script>
+/*
+  Fixed single-file app:
+  - Uses UMD build of @vladmandic/face-api (faceapi is available as global)
+  - Loads models from ./models
+  - Provides upload + camera capture for front + side
+  - Simple analysis using landmarks
+*/
 
-      status.textContent = 'Models loaded. Choose camera or upload a photo.';
+/* ---------- Helpers & DOM ---------- */
+const statusEl = document.getElementById('status');
+const uploadFront = document.getElementById('uploadFront');
+const uploadSide  = document.getElementById('uploadSide');
+const openFrontCam = document.getElementById('openFrontCam');
+const openSideCam  = document.getElementById('openSideCam');
+const analyzeBtn = document.getElementById('analyzeBtn');
+const frontVideo = document.getElementById('frontVideo');
+const sideVideo  = document.getElementById('sideVideo');
+const frontImg = document.getElementById('frontImg');
+const sideImg  = document.getElementById('sideImg');
+const frontCanvas = document.getElementById('frontCanvas');
+const sideCanvas  = document.getElementById('sideCanvas');
+const resultsEl = document.getElementById('results');
+const scoreEl = document.getElementById('score');
+const symEl = document.getElementById('symmetry');
+const jawEl = document.getElementById('jaw');
+const maxEl = document.getElementById('maxilla');
+const eyeEl = document.getElementById('eyeShape');
+
+let frontStream = null;
+let sideStream = null;
+
+/* ---------- Model loading ---------- */
+async function loadModels() {
+  try {
+    statusEl.textContent = 'Loading face-api models from ./models ...';
+    const MODEL_URL = './models';
+    // load required nets
+    await faceapi.nets.ssdMobilenetv1.loadFromUri(MODEL_URL);
+    await faceapi.nets.faceLandmark68Net.loadFromUri(MODEL_URL);
+    // expression net optional, but harmless
+    await faceapi.nets.faceExpressionNet.loadFromUri(MODEL_URL);
+    statusEl.textContent = 'Models loaded. Upload images or use camera.';
+  } catch (err) {
+    console.error('Model load error', err);
+    statusEl.textContent = 'Failed to load models. Check models/ path and server (404 or CORS).';
+  }
+}
+
+/* ---------- Utilities: geometry ---------- */
+function dist(a,b){ return Math.hypot(a.x - b.x, a.y - b.y); }
+function angleDeg(a,b,c){ // angle at b formed by a-b-c
+  const AB = {x:a.x-b.x, y:a.y-b.y}, CB = {x:c.x-b.x, y:c.y-b.y};
+  const dot = AB.x*CB.x + AB.y*CB.y;
+  const mag = Math.hypot(AB.x,AB.y) * Math.hypot(CB.x,CB.y);
+  if (!mag) return 0;
+  return Math.acos(Math.max(-1,Math.min(1, dot/mag))) * 180/Math.PI;
+}
+
+/* ---------- Simple feature calculators ---------- */
+function getJawQuality(landmarks){
+  // use three jaw outline points: near left (4), chin (8), right (12) -> angle at chin
+  const jaw = landmarks.getJawOutline();
+  const a = jaw[4], b = jaw[8], c = jaw[12];
+  const ang = angleDeg(a,b,c);
+  // smaller angle -> sharper jaw
+  if (ang < 95) return {label:'High', angle: Math.round(ang)};
+  if (ang < 110) return {label:'Medium', angle: Math.round(ang)};
+  return {label:'Low', angle: Math.round(ang)};
+}
+
+function getSymmetry(landmarks){
+  // crude symmetry: compare distances from nose center to left/right eye outer corners
+  const nose = landmarks.getNose()[3] || landmarks.getNose()[0];
+  const leftEye = landmarks.getLeftEye()[0];
+  const rightEye = landmarks.getRightEye()[3];
+  const dL = Math.abs(nose.x - leftEye.x);
+  const dR = Math.abs(rightEye.x - nose.x);
+  const diff = Math.abs(dL - dR);
+  if (diff < 6) return 'High';
+  if (diff < 14) return 'Medium';
+  return 'Low';
+}
+
+function getEyeShape(landmarks){
+  const le = landmarks.getLeftEye();
+  const width = dist(le[0], le[3]);
+  const height = (dist(le[1],le[5]) + dist(le[2],le[4]))/2;
+  const ratio = width / (height || 1);
+  if (ratio > 3.0) return 'Almond';
+  if (ratio > 2.5) return 'Oval';
+  return 'Round';
+}
+
+function getMaxillaProjectionFromSide(landmarks){
+  // use nose tip and jaw chin distance as a proxy: smaller horizontal distance => more projection
+  // this is a *very* rough heuristic and depends on side-photo being rotated/cropped similarly
+  const nose = landmarks.getNose();
+  const jaw = landmarks.getJawOutline();
+  // choose tip and chin
+  const tip = nose[6] || nose[3] || nose[0];
+  const chin = jaw[8];
+  const proj = Math.abs(tip.x - chin.x);
+  if (proj < 45) return 'High';
+  if (proj < 75) return 'Medium';
+  return 'Low';
+}
+
+/* ---------- Image / Video capture helpers ---------- */
+function imgFromFile(file, imgEl){
+  return new Promise((resolve, reject) => {
+    const url = URL.createObjectURL(file);
+    imgEl.onload = () => { URL.revokeObjectURL(url); resolve(imgEl); };
+    imgEl.onerror = (e) => reject(e);
+    imgEl.src = url;
+  });
+}
+
+function captureFrame(videoEl, canvasEl){
+  canvasEl.width = videoEl.videoWidth;
+  canvasEl.height = videoEl.videoHeight;
+  const ctx = canvasEl.getContext('2d');
+  ctx.drawImage(videoEl, 0, 0, canvasEl.width, canvasEl.height);
+  const dataUrl = canvasEl.toDataURL('image/png');
+  const img = new Image();
+  img.src = dataUrl;
+  return img;
+}
+
+/* ---------- Analysis flow ---------- */
+
+async function analyzeImageElement(imgEl, useSide=false){
+  // run detection and landmarks on a single HTMLImageElement (or canvas-drawn image)
+  const detection = await faceapi.detectSingleFace(imgEl).withFaceLandmarks().withFaceExpressions();
+  if (!detection) return null;
+  const landmarks = detection.landmarks;
+  // compute features
+  const jaw = getJawQuality(landmarks);
+  const sym = getSymmetry(landmarks);
+  const eye = getEyeShape(landmarks);
+  const maxilla = useSide ? getMaxillaProjectionFromSide(landmarks) : 'N/A';
+  return { jaw, sym, eye, maxilla, detection };
+}
+
+function computeHarmonyScore(frontFeatures, sideFeatures){
+  // simple weighted scoring using feature labels
+  let s = 0; // out of 10
+  // symmetry (front)
+  s += (frontFeatures.sym === 'High') ? 3 : (frontFeatures.sym === 'Medium' ? 2 : 0);
+  // jaw (front)
+  s += (frontFeatures.jaw.label === 'High') ? 3 : (frontFeatures.jaw.label === 'Medium' ? 2 : 0);
+  // eye (front)
+  s += (frontFeatures.eye === 'Almond') ? 2 : (frontFeatures.eye === 'Oval' ? 1 : 0);
+  // maxilla (side)
+  if (sideFeatures && sideFeatures.maxilla){
+    s += (sideFeatures.maxilla === 'High') ? 2 : (sideFeatures.maxilla === 'Medium' ? 1 : 0);
+  }
+  // normalize to 10
+  const totalMax = 10;
+  return ((s/totalMax)*10).toFixed(1);
+}
+
+/* ---------- UI interactions ---------- */
+
+uploadFront.addEventListener('change', async e => {
+  const f = e.target.files[0];
+  if (!f) return;
+  await imgFromFile(f, frontImg);
+  frontVideo.style.display = 'none';
+  frontImg.style.display = 'block';
+  checkReady();
+});
+
+uploadSide.addEventListener('change', async e => {
+  const f = e.target.files[0];
+  if (!f) return;
+  await imgFromFile(f, sideImg);
+  sideVideo.style.display = 'none';
+  sideImg.style.display = 'block';
+  checkReady();
+});
+
+openFrontCam.addEventListener('click', async () => {
+  try {
+    if (frontStream) { frontStream.getTracks().forEach(t=>t.stop()); frontStream = null; }
+    frontStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'user' } });
+    frontVideo.srcObject = frontStream;
+    frontVideo.style.display = 'block';
+    frontImg.style.display = 'none';
+    // wait until video has dimensions
+    await new Promise(r => frontVideo.onloadedmetadata = r);
+    // give user time to position, then capture after 2s
+    statusEl.textContent = 'Front camera active — capturing in 2s...';
+    await new Promise(r => setTimeout(r, 2000));
+    const img = captureFrame(frontVideo, frontCanvas);
+    img.onload = () => {
+      frontImg.src = img.src;
+      frontImg.style.display = 'block';
+      frontVideo.style.display = 'none';
+      // stop stream
+      frontStream.getTracks().forEach(t=>t.stop());
+      frontStream = null;
+      statusEl.textContent = 'Front captured.';
+      checkReady();
+    };
+  } catch (err){
+    console.error('Front camera error', err);
+    statusEl.textContent = 'Cannot access front camera. Check permissions.';
+  }
+});
+
+openSideCam.addEventListener('click', async () => {
+  try {
+    if (sideStream) { sideStream.getTracks().forEach(t=>t.stop()); sideStream = null; }
+    sideStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'user' } });
+    sideVideo.srcObject = sideStream;
+    sideVideo.style.display = 'block';
+    sideImg.style.display = 'none';
+    await new Promise(r => sideVideo.onloadedmetadata = r);
+    statusEl.textContent = 'Side camera active — capturing in 2s...';
+    await new Promise(r => setTimeout(r, 2000));
+    const img = captureFrame(sideVideo, sideCanvas);
+    img.onload = () => {
+      sideImg.src = img.src;
+      sideImg.style.display = 'block';
+      sideVideo.style.display = 'none';
+      sideStream.getTracks().forEach(t=>t.stop());
+      sideStream = null;
+      statusEl.textContent = 'Side captured.';
+      checkReady();
+    };
+  } catch (err){
+    console.error('Side camera error', err);
+    statusEl.textContent = 'Cannot access side camera. Check permissions.';
+  }
+});
+
+function checkReady(){
+  // only enable analyze when both previews have src
+  if (frontImg.src && sideImg.src) {
+    analyzeBtn.disabled = false;
+  } else {
+    analyzeBtn.disabled = true;
+  }
+}
+
+/* ---------- Analyze button ---------- */
+analyzeBtn.addEventListener('click', async () => {
+  statusEl.textContent = 'Analyzing...';
+  resultsEl.hidden = true;
+
+  try {
+    // front (use front image element)
+    const frontFeat = await analyzeImageElement(frontImg, false);
+    // side
+    const sideFeat = await analyzeImageElement(sideImg, true);
+
+    if (!frontFeat || !sideFeat) {
+      statusEl.textContent = 'Could not detect face in one or both images. Try clearer lighting or reposition.';
+      return;
     }
 
-    async function startCamera() {
-      try {
-        const stream = await navigator.mediaDevices.getUserMedia({ video: true });
-        video.srcObject = stream;
-        video.onplay = () => analyzeVideo();
-        status.textContent = 'Camera started. Analyzing...';
-      } catch (err) {
-        console.error('Camera error:', err);
-        status.textContent = 'Camera access denied or not available.';
-      }
-    }
+    // compute and show
+    const harmony = computeHarmonyScore(frontFeat, sideFeat);
+    scoreEl.textContent = `${harmony} / 10`;
+    symEl.textContent = frontFeat.sym;
+    jawEl.textContent = `${frontFeat.jaw.label} (angle ${frontFeat.jaw.angle}°)`;
+    maxEl.textContent = sideFeat.maxilla;
+    eyeEl.textContent = frontFeat.eye;
 
-    async function analyzeVideo() {
-      const displaySize = { width: video.width, height: video.height };
-      faceapi.matchDimensions(overlay, displaySize);
+    resultsEl.hidden = false;
+    statusEl.textContent = 'Analysis complete.';
+  } catch (err) {
+    console.error('Analyze error', err);
+    statusEl.textContent = 'Error during analysis. Check console.';
+  }
+});
 
-      setInterval(async () => {
-        const detections = await faceapi
-          .detectAllFaces(video)
-          .withFaceLandmarks()
-          .withFaceExpressions();
-
-        const resized = faceapi.resizeResults(detections, displaySize);
-        overlay.getContext('2d').clearRect(0, 0, overlay.width, overlay.height);
-        faceapi.draw.drawDetections(overlay, resized);
-        faceapi.draw.drawFaceLandmarks(overlay, resized);
-        faceapi.draw.drawFaceExpressions(overlay, resized);
-      }, 300);
-    }
-
-    upload.addEventListener('change', async () => {
-      const file = upload.files[0];
-      if (!file) return;
-
-      status.textContent = 'Analyzing photo...';
-      const img = await faceapi.bufferToImage(file);
-      photo.src = img.src;
-      photo.hidden = false;
-      video.hidden = true;
-      overlay.hidden = true;
-
-      const detections = await faceapi
-        .detectAllFaces(photo)
-        .withFaceLandmarks()
-        .withFaceExpressions();
-
-      if (detections.length === 0) {
-        status.textContent = 'No face detected.';
-        return;
-      }
-
-      const canvas = faceapi.createCanvasFromMedia(photo);
-      document.body.append(canvas);
-      const displaySize = { width: photo.width, height: photo.height };
-      faceapi.matchDimensions(canvas, displaySize);
-      const resized = faceapi.resizeResults(detections, displaySize);
-      faceapi.draw.drawDetections(canvas, resized);
-      faceapi.draw.drawFaceLandmarks(canvas, resized);
-      faceapi.draw.drawFaceExpressions(canvas, resized);
-      status.textContent = 'Photo analysis complete!';
-    });
-
-    startCameraBtn.addEventListener('click', startCamera);
-
-    loadModels();
-  </script>
+/* ---------- Start ---------- */
+window.addEventListener('load', async () => {
+  // If faceapi global doesn't exist, likely wrong script loaded or blocked
+  if (!window.faceapi) {
+    statusEl.textContent = 'face-api library not found. Make sure you included the UMD build: @vladmandic/face-api.';
+    console.error('faceapi missing: window.faceapi is falsy');
+    return;
+  }
+  await loadModels();
+});
+</script>
 </body>
 </html>
