@@ -359,29 +359,30 @@
             const protein = parseFloat(macroProtein.value) || 0;
             const carbs = parseFloat(macroCarbs.value) || 0;
             const fats = parseFloat(macroFats.value) || 0;
-            
-            // Calorie calculations
             const proteinCals = protein * 4;
             const carbsCals = carbs * 4;
             const fatsCals = fats * 9;
             const totalCals = proteinCals + carbsCals + fatsCals;
+            const totalKj = totalCals * 4.184;                
 
-            // Generate output HTML
-            const outputHTML = `
-                <div class="grid grid-cols-2 gap-4 max-w-sm mx-auto text-left">
-                    <p class="font-bold text-gray-300">Protein:</p>
-                    <p class="text-right text-white">${protein.toFixed(0)}g / ${proteinCals.toFixed(0)} kcal</p>
-                    
-                    <p class="font-bold text-gray-300">Carbs:</p>
-                    <p class="text-right text-white">${carbs.toFixed(0)}g / ${carbsCals.toFixed(0)} kcal</p>
-                    
-                    <p class="font-bold text-gray-300">Fats:</p>
-                    <p class="text-right text-white">${fats.toFixed(0)}g / ${fatsCals.toFixed(0)} kcal</p>
-                    
-                    <div class="col-span-2 border-t border-gray-600 mt-2 pt-2"></div>
 
-                    <p class="font-extrabold text-[#10b981] text-lg">TOTAL CALORIES:</p>
-                    <p class="text-right font-extrabold text-[#10b981] text-lg">${totalCals.toFixed(0)} kcal</p>
+        const outputHTML = `
+            <div class="grid grid-cols-2 gap-4 max-w-sm mx-auto text-left">
+                <p class="font-bold text-gray-300">Protein:</p>
+                <p class="text-right text-white">${protein.toFixed(0)}g / ${proteinCals.toFixed(0)} kcal</p>
+        
+                <p class="font-bold text-gray-300">Carbs:</p>
+                <p class="text-right text-white">${carbs.toFixed(0)}g / ${carbsCals.toFixed(0)} kcal</p>
+        
+                <p class="font-bold text-gray-300">Fats:</p>
+                <p class="text-right text-white">${fats.toFixed(0)}g / ${fatsCals.toFixed(0)} kcal</p>
+        
+                <div class="col-span-2 border-t border-gray-600 mt-2 pt-2"></div>
+
+                <p class="font-extrabold text-[#10b981] text-lg">TOTAL CALORIES:</p>
+                <p class="text-right font-extrabold text-[#10b981] text-lg">${totalCals.toFixed(0)} kcal</p>
+                <p class="font-extrabold text-[#10b981] text-lg">TOTAL KJ:</p>
+                <p class="text-right font-extrabold text-[#10b981] text-lg">${totalKj.toFixed(0)} kj</p>
                 </div>
                 <p class="text-sm text-gray-500 mt-6">Data logged for today. Remember to track throughout the day!</p>
             `;
