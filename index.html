@@ -51,80 +51,183 @@
             transform: translateY(-2px);
             box-shadow: 0 6px 15px rgba(96, 165, 250, 0.4);
         }
+
+        /* Style for the active tab/section button */
+        .tab-button.active {
+            border-color: #60a5fa;
+            color: #ffffff;
+            background-color: #1e3a8a; /* A subtle dark blue to indicate active state */
+        }
     </style>
 </head>
-<body class="p-4 sm:p-8 min-h-screen flex items-center justify-center">
+<body class="p-4 sm:p-8 min-h-screen flex items-start justify-center">
 
-    <div id="app-container" class="w-full max-w-5xl bg-[#161b22] p-8 sm:p-12 rounded-2xl shadow-2xl text-[#c9d1d9]">
-        <h1 class="text-3xl sm:text-4xl font-extrabold text-center mb-10 text-white">
-            Aesthetic Profile Analyzer 📐
+    <div id="app-container" class="w-full max-w-5xl bg-[#161b22] p-8 sm:p-12 rounded-2xl shadow-2xl text-[#c9d1d9] mt-8">
+        <h1 class="text-3xl sm:text-4xl font-extrabold text-center mb-6 text-white">
+            Glow & Grow 🧬
         </h1>
 
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-8 mb-10">
+        <div class="flex flex-wrap justify-center gap-4 mb-10 border-b border-gray-700 pb-4">
+            <button id="tab-aesthetic" onclick="showSection('aesthetic')" 
+                    class="tab-button active px-6 py-3 font-semibold rounded-lg border-2 border-transparent transition-all duration-200 text-lg hover:border-[#60a5fa] hover:text-white">
+                ✨ Harmony Scan
+            </button>
+            <button id="tab-haircut" onclick="showSection('haircut')" 
+                    class="tab-button px-6 py-3 font-semibold rounded-lg border-2 border-transparent transition-all duration-200 text-lg hover:border-[#60a5fa] hover:text-white">
+                💇 Face Shape & Haircuts
+            </button>
+            <button id="tab-macros" onclick="showSection('macros')" 
+                    class="tab-button px-6 py-3 font-semibold rounded-lg border-2 border-transparent transition-all duration-200 text-lg hover:border-[#60a5fa] hover:text-white">
+                💪 Daily Macros
+            </button>
+        </div>
+        
+        <div id="section-aesthetic" class="app-section">
+            <h2 class="text-2xl font-bold text-center mb-8 text-[#60a5fa]">Facial Harmony & Profile Score</h2>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-8 mb-10">
 
-            <div class="bg-[#0d1117] p-6 rounded-xl border border-[#30363d]">
-                <label class="block text-xl font-bold mb-4 text-center text-[#60a5fa]">Front Face Image</label>
-                
-                <div id="front-preview-container" class="preview-container w-full h-80 rounded-xl bg-[#21262d] flex items-center justify-center relative overflow-hidden transition-all duration-300">
-                    <img id="front-preview" class="hidden w-full h-full object-contain rounded-lg" alt="Front Profile Preview">
-                    <span id="front-placeholder" class="text-center p-4 absolute text-gray-500">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-12 w-12 mx-auto mb-3 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                            <path stroke-linecap="round" stroke-linejoin="round" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                        </svg>
-                        Upload or Capture Front Image
-                    </span>
-                    <div id="front-face-indicator" class="absolute bottom-2 left-2 px-3 py-1 text-xs font-semibold rounded-full bg-yellow-900 text-yellow-300 hidden">
-                        Processing...
+                <div class="bg-[#0d1117] p-6 rounded-xl border border-[#30363d]">
+                    <label class="block text-xl font-bold mb-4 text-center text-[#60a5fa]">Front Face Image</label>
+                    
+                    <div id="front-preview-container" class="preview-container w-full h-80 rounded-xl bg-[#21262d] flex items-center justify-center relative overflow-hidden transition-all duration-300">
+                        <img id="front-preview" class="hidden w-full h-full object-contain rounded-lg" alt="Front Profile Preview">
+                        <span id="front-placeholder" class="text-center p-4 absolute text-gray-500">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-12 w-12 mx-auto mb-3 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                            </svg>
+                            Upload or Capture Front Image
+                        </span>
+                        <div id="front-face-indicator" class="absolute bottom-2 left-2 px-3 py-1 text-xs font-semibold rounded-full bg-yellow-900 text-yellow-300 hidden">
+                            Processing...
+                        </div>
+                    </div>
+
+                    <div class="mt-6 flex space-x-4">
+                        <input type="file" id="front-upload" accept="image/*" class="hidden" onchange="handleFileInput(this, 'front')">
+                        <label for="front-upload" class="flex-1 px-4 py-3 text-center bg-[#30363d] hover:bg-[#4b5563] text-white font-semibold rounded-lg transition-colors cursor-pointer primary-button">
+                            📂 Upload File
+                        </label>
+                        <button onclick="openCamera('front')" class="flex-1 px-4 py-3 bg-[#60a5fa] hover:bg-blue-600 text-white font-semibold rounded-lg transition-colors primary-button">
+                            📸 Live Photo
+                        </button>
                     </div>
                 </div>
 
-                <div class="mt-6 flex space-x-4">
-                    <input type="file" id="front-upload" accept="image/*" class="hidden" onchange="handleFileInput(this, 'front')">
-                    <label for="front-upload" class="flex-1 px-4 py-3 text-center bg-[#30363d] hover:bg-[#4b5563] text-white font-semibold rounded-lg transition-colors cursor-pointer primary-button">
-                        📂 Upload File
-                    </label>
-                    <button onclick="openCamera('front')" class="flex-1 px-4 py-3 bg-[#60a5fa] hover:bg-blue-600 text-white font-semibold rounded-lg transition-colors primary-button">
-                        📸 Live Photo
-                    </button>
+                <div class="bg-[#0d1117] p-6 rounded-xl border border-[#30363d]">
+                    <label class="block text-xl font-bold mb-4 text-center text-[#60a5fa]">Side Profile Image</label>
+                    
+                    <div id="side-preview-container" class="preview-container w-full h-80 rounded-xl bg-[#21262d] flex items-center justify-center relative overflow-hidden transition-all duration-300">
+                        <img id="side-preview" class="hidden w-full h-full object-contain rounded-lg" alt="Side Profile Preview">
+                        <span id="side-placeholder" class="text-center p-4 absolute text-gray-500">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-12 w-12 mx-auto mb-3 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M10 21h7a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-2.414-2.414A1 1 0 0015.586 6H10a2 2 0 00-2 2v11a2 2 0 002 2z" />
+                            </svg>
+                            Upload or Capture Side Image
+                        </span>
+                    </div>
+
+                    <div class="mt-6 flex space-x-4">
+                        <input type="file" id="side-upload" accept="image/*" class="hidden" onchange="handleFileInput(this, 'side')">
+                        <label for="side-upload" class="flex-1 px-4 py-3 text-center bg-[#30363d] hover:bg-[#4b5563] text-white font-semibold rounded-lg transition-colors cursor-pointer primary-button">
+                            📂 Upload File
+                        </label>
+                        <button onclick="openCamera('side')" class="flex-1 px-4 py-3 bg-[#60a5fa] hover:bg-blue-600 text-white font-semibold rounded-lg transition-colors primary-button">
+                            📸 Live Photo
+                        </button>
+                    </div>
                 </div>
             </div>
 
-            <div class="bg-[#0d1117] p-6 rounded-xl border border-[#30363d]">
-                <label class="block text-xl font-bold mb-4 text-center text-[#60a5fa]">Side Profile Image</label>
+            <div class="text-center">
+                <button id="rate-button" onclick="getRating()" disabled class="px-10 py-4 text-2xl font-bold rounded-full transition-all duration-300 primary-button
+                    bg-gray-700 text-gray-400 cursor-not-allowed hover:scale-[1.02] shadow-xl">
+                    Get Harmony Score (1-10) 🚀
+                </button>
+            </div>
+
+            <div id="result-area" class="mt-12 p-8 sm:p-10 bg-[#21262d] rounded-2xl border border-[#30363d] shadow-xl hidden">
+                <h2 class="text-3xl font-extrabold mb-5 text-center text-[#60a5fa]">Facial Harmony Analysis Complete!</h2>
+                <div id="rating-output" class="text-center">
+                </div>
+            </div>
+        </div>
+
+        <div id="section-haircut" class="app-section hidden">
+            <h2 class="text-2xl font-bold text-center mb-8 text-[#60a5fa]">Face Shape & Haircut Recommender</h2>
+
+            <div class="bg-[#0d1117] p-8 rounded-xl border border-[#30363d] max-w-lg mx-auto">
+                <label class="block text-xl font-bold mb-4 text-center text-yellow-400">Upload Front-Facing Photo</label>
                 
-                <div id="side-preview-container" class="preview-container w-full h-80 rounded-xl bg-[#21262d] flex items-center justify-center relative overflow-hidden transition-all duration-300">
-                    <img id="side-preview" class="hidden w-full h-full object-contain rounded-lg" alt="Side Profile Preview">
-                    <span id="side-placeholder" class="text-center p-4 absolute text-gray-500">
+                <div id="haircut-preview-container" class="preview-container w-full h-80 rounded-xl bg-[#21262d] flex items-center justify-center relative overflow-hidden transition-all duration-300 mb-6">
+                    <img id="haircut-preview" class="hidden w-full h-full object-contain rounded-lg" alt="Face Shape Preview">
+                    <span id="haircut-placeholder" class="text-center p-4 absolute text-gray-500">
                         <svg xmlns="http://www.w3.org/2000/svg" class="h-12 w-12 mx-auto mb-3 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                            <path stroke-linecap="round" stroke-linejoin="round" d="M10 21h7a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-2.414-2.414A1 1 0 0015.586 6H10a2 2 0 00-2 2v11a2 2 0 002 2z" />
+                            <path d="M5 20a2 2 0 01-2-2V8a2 2 0 012-2h12a2 2 0 012 2v10a2 2 0 01-2 2H5z" />
+                            <path d="M15 6V4a2 2 0 00-2-2h-2a2 2 0 00-2 2v2M8 11h8" />
                         </svg>
-                        Upload or Capture Side Image
+                        Take or Upload Photo for Analysis
                     </span>
                 </div>
 
-                <div class="mt-6 flex space-x-4">
-                    <input type="file" id="side-upload" accept="image/*" class="hidden" onchange="handleFileInput(this, 'side')">
-                    <label for="side-upload" class="flex-1 px-4 py-3 text-center bg-[#30363d] hover:bg-[#4b5563] text-white font-semibold rounded-lg transition-colors cursor-pointer primary-button">
+                <div class="flex space-x-4 mb-8">
+                    <input type="file" id="haircut-upload" accept="image/*" class="hidden" onchange="handleHaircutInput(this)">
+                    <label for="haircut-upload" class="flex-1 px-4 py-3 text-center bg-[#30363d] hover:bg-[#4b5563] text-white font-semibold rounded-lg transition-colors cursor-pointer primary-button">
                         📂 Upload File
                     </label>
-                    <button onclick="openCamera('side')" class="flex-1 px-4 py-3 bg-[#60a5fa] hover:bg-blue-600 text-white font-semibold rounded-lg transition-colors primary-button">
+                    <button onclick="openCamera('haircut')" class="flex-1 px-4 py-3 bg-yellow-600 hover:bg-yellow-700 text-white font-semibold rounded-lg transition-colors primary-button">
                         📸 Live Photo
                     </button>
                 </div>
+
+                <div class="text-center">
+                    <button id="scan-haircut-button" onclick="getFaceShapeAndHaircuts()" disabled class="px-10 py-4 text-xl font-bold rounded-full transition-all duration-300 primary-button
+                        bg-gray-700 text-gray-400 cursor-not-allowed hover:scale-[1.02] shadow-xl">
+                        Scan Face Shape ✂️
+                    </button>
+                </div>
+            </div>
+
+            <div id="haircut-result-area" class="mt-12 p-8 bg-[#21262d] rounded-2xl border border-[#30363d] shadow-xl hidden">
+                <h3 class="text-2xl font-extrabold mb-4 text-center text-yellow-400">Your Suggested Haircuts!</h3>
+                <div id="haircut-output" class="text-center">
+                    </div>
             </div>
         </div>
 
-        <div class="text-center">
-            <button id="rate-button" onclick="getRating()" disabled class="px-10 py-4 text-2xl font-bold rounded-full transition-all duration-300 primary-button
-                bg-gray-700 text-gray-400 cursor-not-allowed hover:scale-[1.02] shadow-xl">
-                Get Harmony Score (1-10) 🚀
-            </button>
-        </div>
+        <div id="section-macros" class="app-section hidden">
+            <h2 class="text-2xl font-bold text-center mb-8 text-[#10b981]">Daily Macronutrient Tracker</h2>
 
-        <div id="result-area" class="mt-12 p-8 sm:p-10 bg-[#21262d] rounded-2xl border border-[#30363d] shadow-xl hidden">
-            <h2 class="text-3xl font-extrabold mb-5 text-center text-[#60a5fa]">Facial Harmony Analysis Complete!</h2>
-            <div id="rating-output" class="text-center">
+            <div class="max-w-xl mx-auto p-8 bg-[#0d1117] rounded-xl border border-[#30363d] shadow-lg">
+                <p class="text-lg text-gray-400 mb-6 text-center">Input the total grams of Protein, Carbs, and Fats you've consumed so far today.</p>
+
+                <div class="space-y-4">
+                    <div class="flex items-center space-x-4">
+                        <label for="macro-protein" class="w-24 text-white font-semibold">Protein:</label>
+                        <input type="number" id="macro-protein" placeholder="Grams (g)" value="0" min="0" class="flex-1 p-3 rounded-lg bg-[#21262d] border border-[#30363d] text-white focus:border-[#10b981] focus:ring-1 focus:ring-[#10b981]">
+                    </div>
+                    <div class="flex items-center space-x-4">
+                        <label for="macro-carbs" class="w-24 text-white font-semibold">Carbs:</label>
+                        <input type="number" id="macro-carbs" placeholder="Grams (g)" value="0" min="0" class="flex-1 p-3 rounded-lg bg-[#21262d] border border-[#30363d] text-white focus:border-[#10b981] focus:ring-1 focus:ring-[#10b981]">
+                    </div>
+                    <div class="flex items-center space-x-4">
+                        <label for="macro-fats" class="w-24 text-white font-semibold">Fats:</label>
+                        <input type="number" id="macro-fats" placeholder="Grams (g)" value="0" min="0" class="flex-1 p-3 rounded-lg bg-[#21262d] border border-[#30363d] text-white focus:border-[#10b981] focus:ring-1 focus:ring-[#10b981]">
+                    </div>
                 </div>
+
+                <div class="text-center mt-8">
+                    <button onclick="calculateMacros()" class="px-10 py-4 text-xl font-bold rounded-full transition-all duration-300 primary-button
+                        bg-[#10b981] text-white hover:bg-green-700 shadow-xl">
+                        Calculate & Log Macros 📊
+                    </button>
+                </div>
+            </div>
+
+            <div id="macro-result-area" class="mt-12 p-8 bg-[#21262d] rounded-2xl border border-[#30363d] shadow-xl hidden">
+                <h3 class="text-2xl font-extrabold mb-4 text-center text-[#10b981]">Today's Macro Summary</h3>
+                <div id="macro-output" class="text-center">
+                    </div>
+            </div>
         </div>
 
         <div id="custom-modal" class="fixed inset-0 bg-black bg-opacity-80 flex items-center justify-center z-50 hidden">
@@ -165,38 +268,42 @@
     </div>
 
     <script>
+        // --- EXISTING CONSTANTS ---
         const frontInput = document.getElementById('front-upload');
         const sideInput = document.getElementById('side-upload');
         const rateButton = document.getElementById('rate-button');
-
-        // Camera elements
         const videoStream = document.getElementById('video-stream');
         const photoCanvas = document.getElementById('photo-canvas');
         const cameraModal = document.getElementById('camera-modal');
         const captureButton = document.getElementById('capture-button');
         let currentStream = null;
-        let captureTarget = null; // 'front' or 'side'
-        
-        // --- STATE MANAGEMENT ---
-        let lastAnalysisResult = null; // Stores the result HTML for re-rates
-        let imageChanged = true; // Flag to force a new score if images are new
+        let captureTarget = null; // 'front', 'side', or 'haircut'
+        let lastAnalysisResult = null;
+        let imageChanged = true;
+        let haircutImageFile = null;
+        let faceMeasurementData = null; // NEW: To store the simulated measurements
+
+        // --- NEW CONSTANTS FOR MACRO TRACKER ---
+        const macroProtein = document.getElementById('macro-protein');
+        const macroCarbs = document.getElementById('macro-carbs');
+        const macroFats = document.getElementById('macro-fats');
 
         // --- DETAILED FEATURE DATA STRUCTURES (Unchanged) ---
         const anatomicalFeatures = {
             'Ramus Angle & Projection': {
-                high: ['Excellent **Ramus** angle (less than 90 degrees) creating a sharp, projected jawline.', 'Strong vertical length of the **Ramus** contributes to superior lower-face proportion.'],
-                medium: ['The **Ramus** shows a decent angle, but a slight improvement in masseter muscle development or reduction in submental fat would enhance the jaw angle.', 'Good horizontal projection, but vertical length is slightly below optimal.'],
-                low: ['Insufficient **Ramus** projection and obtuse angle (greater than 110 degrees), resulting in a weak or rounded jawline.', 'The transition from the earlobe to the jaw angle is poorly defined due to lack of bone prominence or excess soft tissue.']
+                high: ['Excellent Ramus angle (less than 90 degrees) creating a sharp, projected jawline.', 'Strong vertical length of the Ramus contributes to superior lower-face proportion.'],
+                medium: ['The Ramus shows a decent angle, but a slight improvement in masseter muscle development or reduction in submental fat would enhance the jaw angle.', 'Good horizontal projection, but vertical length is slightly below optimal.'],
+                low: ['Insufficient Ramus projection and obtuse angle (greater than 110 degrees), resulting in a weak or rounded jawline.', 'The transition from the earlobe to the jaw angle is poorly defined due to lack of bone prominence or excess soft tissue.']
             },
             'Maxilla Projection (Midface)': {
-                high: ['Strong **Maxilla** projection resulting in an attractive forward-growth facial profile and good orbital support.', 'Exceptional midface ratio with an aesthetically forward-set **Maxilla** and good definition below the orbital rim.'],
-                medium: ['Balanced midface projection, though slight recession is visible from the true side profile (Nasion-Porion plane).', 'The **Maxilla** is moderately forward, providing solid foundation for the cheekbones, but could be enhanced.'],
-                low: ['The **Maxilla** is clearly recessed (under-projected), which flattens the midface and reduces anterior cheekbone prominence.', 'A posterior-set **Maxilla** affects overall facial support and can make the nasal projection appear disproportionately large.']
+                high: ['Strong Maxilla projection resulting in an attractive forward-growth facial profile and good orbital support.', 'Exceptional midface ratio with an aesthetically forward-set Maxilla and good definition below the orbital rim.'],
+                medium: ['Balanced midface projection, though slight recession is visible from the true side profile (Nasion-Porion plane).', 'The Maxilla is moderately forward, providing solid foundation for the cheekbones, but could be enhanced.'],
+                low: ['The Maxilla is clearly recessed (under-projected), which flattens the midface and reduces anterior cheekbone prominence.', 'A posterior-set Maxilla affects overall facial support and can make the nasal projection appear disproportionately large.']
             },
             'Zygos (Cheekbones)': {
-                high: ['Outstanding development of the **Zygos** (cheekbones), creating a broad and high malar projection, especially visible from the 3/4 view.', 'Prominent and angular **Zygomatic bones** contribute greatly to facial sharpness and definition, creating a strong "Hunter Eye" platform.'],
-                medium: ['The **Zygos** have a moderate projection; they provide decent width, but a slight increase in definition would enhance their angularity.', 'Good malar projection, but the lack of buccal fat reduction dulls the natural contour.'],
-                low: ['Lack of noticeable **Zygos** width and prominence, leading to a softer, less defined midface contour.', 'The cheekbones appear flat or narrow, which diminishes the "V-taper" of the upper face.']
+                high: ['Outstanding development of the Zygos (cheekbones), creating a broad and high malar projection, especially visible from the 3/4 view.', 'Prominent and angular Zygomatic bones contribute greatly to facial sharpness and definition, creating a strong "Hunter Eye" platform.'],
+                medium: ['The Zygos have a moderate projection; they provide decent width, but a slight increase in definition would enhance their angularity.', 'Good malar projection, but the lack of buccal fat reduction dulls the natural contour.'],
+                low: ['Lack of noticeable Zygos width and prominence, leading to a softer, less defined midface contour.', 'The cheekbones appear flat or narrow, which diminishes the "V-taper" of the upper face.']
             },
             'Lips/Mouth': {
                 high: ['Full, symmetrical lips with a pronounced Cupid\'s bow and defined vermillion border.', 'Excellent teeth alignment and display area, complementing the philtrum length.'],
@@ -207,25 +314,317 @@
 
         const eyeAnalysis = {
             'Almond': {
-                high: ['Eyes have a beautiful **Almond** shape, considered universally attractive for its elongation and upturned outer corner (positive canthal tilt).', 'Perfectly balanced **Almond** eyes, with excellent scleral clarity and deep limbal rings.'],
-                medium: ['Good horizontal width, close to the ideal inter-canthal distance.', 'The **Almond** shape is present but could be enhanced by reducing minor eyelid puffiness.'],
+                high: ['Eyes have a beautiful Almond shape, considered universally attractive for its elongation and upturned outer corner (positive canthal tilt).', 'Perfectly balanced Almond eyes, with excellent scleral clarity and deep limbal rings.'],
+                medium: ['Good horizontal width, close to the ideal inter-canthal distance.', 'The Almond shape is present but could be enhanced by reducing minor eyelid puffiness.'],
                 low: ['Slightly downward canthal tilt, which can make the face appear tired or sad.', 'Moderate amount of scleral show (white below the iris) is present, which is less ideal.']
             },
             'Hooded': {
-                high: ['A well-defined **Hooded** eyelid is present, adding a mysterious, desirable depth to the gaze.', 'Excellent brow bone projection frames the **Hooded** eyes, creating a strong eye area (Hunter Eyes).'],
-                medium: ['The lid crease is partially obscured, classifying your eyes as **Hooded**. Horizontal width is excellent, but eyebrow density could be improved.', 'Good orbital area bone structure, but the upper lid overhang is prominent.'],
-                low: ['Heavy **Hooded** eyelids that partially obscure the iris/pupil, reducing the effective eye area.', 'Lack of significant brow ridge projection makes the hooding appear prominent and detracts from the gaze.']
+                high: ['A well-defined Hooded eyelid is present, adding a mysterious, desirable depth to the gaze.', 'Excellent brow bone projection frames the Hooded eyes, creating a strong eye area (Hunter Eyes).'],
+                medium: ['The lid crease is partially obscured, classifying your eyes as Hooded. Horizontal width is excellent, but eyebrow density could be improved.', 'Good orbital area bone structure, but the upper lid overhang is prominent.'],
+                low: ['Heavy Hooded eyelids that partially obscure the iris/pupil, reducing the effective eye area.', 'Lack of significant brow ridge projection makes the hooding appear prominent and detracts from the gaze.']
             }
         };
 
         const faceShapes = {
-            'Oval': 'A **well-balanced** and proportionate shape, often considered the *ideal* for versatility in grooming. The width of your forehead is slightly greater than the jaw.',
-            'Square': 'A **strong, angular** shape characterized by a broad forehead and a wide, angular jawline. This conveys high facial maturity and strength.',
-            'Round': 'A softer shape, nearly equal in width and length, with minimal angles. Focus on styling with **height** to create an illusion of length.',
-            'Diamond': 'A sharp shape with a narrow forehead and jawline, but pronounced, wide **cheekbones**. Your cheekbones are the most defining feature.',
-            'Heart': 'Wide at the forehead and temples, tapering sharply to a narrow, pointed chin. Focus should be on **widening the lower face** visually.'
+            'Oval': 'An Oval shape: well-balanced and proportionate. Haircuts that keep your hair off the forehead will showcase your balance. <br><br>👉 Recommendations: Classic Taper, Slick Back, Quiff with medium fade.',
+            'Square': 'A Square shape: strong, angular, with a broad jaw. Haircuts that slightly soften the strong jawline are great, or ones that match the angularity. <br><br>👉 Recommendations: Faux Hawk, Undercut with clean lines, or a Buzz Cut.',
+            'Round': 'A Round shape: nearly equal in width and length, with minimal angles. Focus on styling with height to create an illusion of length. <br><br>👉 Recommendations: Pompadour, Textured Crop with height, or a High-and-Tight.',
+            'Diamond': 'A Diamond shape: narrow forehead and jawline, but pronounced cheekbones. Use hair to add width to the forehead and jaw. <br><br>👉 Recommendations: Fringe/Bangs, Side Swept Style, or a Longer Textured Haircut.',
+            'Heart': 'A Heart shape: wide at the forehead, tapering sharply to a narrow chin. Focus should be on widening the lower face visually. <br><br>👉 Recommendations: Side Part, Medium-length Messy Hair, or a Crew Cut.'
         };
         
+        // --- NEW FUNCTIONS FOR HOME PAGE NAVIGATION ---
+
+        /**
+         * Switches between the application sections (tabs).
+         * @param {string} sectionId - The ID of the section to show ('aesthetic', 'haircut', 'macros').
+         */
+        function showSection(sectionId) {
+            const sections = ['aesthetic', 'haircut', 'macros'];
+            
+            // Hide all sections and remove active class from all buttons
+            sections.forEach(id => {
+                document.getElementById(`section-${id}`).classList.add('hidden');
+                document.getElementById(`tab-${id}`).classList.remove('active');
+            });
+
+            // Show the selected section and add active class to its button
+            document.getElementById(`section-${sectionId}`).classList.remove('hidden');
+            document.getElementById(`tab-${sectionId}`).classList.add('active');
+        }
+
+        // --- NEW FUNCTIONS FOR MACRO TRACKER ---
+
+        function calculateMacros() {
+            const protein = parseFloat(macroProtein.value) || 0;
+            const carbs = parseFloat(macroCarbs.value) || 0;
+            const fats = parseFloat(macroFats.value) || 0;
+            
+            // Calorie calculations
+            const proteinCals = protein * 4;
+            const carbsCals = carbs * 4;
+            const fatsCals = fats * 9;
+            const totalCals = proteinCals + carbsCals + fatsCals;
+
+            // Generate output HTML
+            const outputHTML = `
+                <div class="grid grid-cols-2 gap-4 max-w-sm mx-auto text-left">
+                    <p class="font-bold text-gray-300">Protein:</p>
+                    <p class="text-right text-white">${protein.toFixed(0)}g / ${proteinCals.toFixed(0)} kcal</p>
+                    
+                    <p class="font-bold text-gray-300">Carbs:</p>
+                    <p class="text-right text-white">${carbs.toFixed(0)}g / ${carbsCals.toFixed(0)} kcal</p>
+                    
+                    <p class="font-bold text-gray-300">Fats:</p>
+                    <p class="text-right text-white">${fats.toFixed(0)}g / ${fatsCals.toFixed(0)} kcal</p>
+                    
+                    <div class="col-span-2 border-t border-gray-600 mt-2 pt-2"></div>
+
+                    <p class="font-extrabold text-[#10b981] text-lg">TOTAL CALORIES:</p>
+                    <p class="text-right font-extrabold text-[#10b981] text-lg">${totalCals.toFixed(0)} kcal</p>
+                </div>
+                <p class="text-sm text-gray-500 mt-6">Data logged for today. Remember to track throughout the day!</p>
+            `;
+
+            document.getElementById('macro-output').innerHTML = outputHTML;
+            document.getElementById('macro-result-area').classList.remove('hidden');
+            document.getElementById('macro-result-area').scrollIntoView({ behavior: 'smooth' });
+        }
+
+        // --- MODIFIED FUNCTIONS FOR FACE SHAPE/HAIRCUT ---
+
+        // NEW: Function to simulate face shape measurements
+        function simulateFaceMeasurements() {
+            // Simulate random measurements, focusing on the ratio (Length/Width)
+            const length = Math.random() * (20 - 15) + 15; // e.g., 15cm to 20cm
+            const width = Math.random() * (12 - 9) + 9;    // e.g., 9cm to 12cm
+            const ratio = length / width; // Critical ratio
+
+            // Simulate forehead/jaw/cheek ratios for extra detail
+            const foreheadRatio = Math.random() * (0.95 - 0.75) + 0.75; // Ratio of Forehead to Width
+            const jawRatio = Math.random() * (0.95 - 0.70) + 0.70;       // Ratio of Jawline to Width
+
+            return {
+                length: length.toFixed(1),
+                width: width.toFixed(1),
+                ratio: ratio,
+                forehead: (width * foreheadRatio).toFixed(1),
+                jaw: (width * jawRatio).toFixed(1),
+                cheekbone: width.toFixed(1)
+            };
+        }
+
+        function handleHaircutInput(input) {
+            if (input.files && input.files[0]) {
+                haircutImageFile = input.files[0];
+                // NEW: Generate and store the measurements when a file is ready
+                faceMeasurementData = simulateFaceMeasurements();
+
+                const file = haircutImageFile;
+                const preview = document.getElementById('haircut-preview');
+                const placeholder = document.getElementById('haircut-placeholder');
+                const container = document.getElementById('haircut-preview-container');
+
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    preview.src = e.target.result;
+                    preview.classList.remove('hidden');
+                    placeholder.classList.add('hidden');
+                    container.classList.add('has-image');
+                    document.getElementById('scan-haircut-button').disabled = false;
+                    document.getElementById('scan-haircut-button').classList.remove('bg-gray-700', 'text-gray-400', 'cursor-not-allowed');
+                    document.getElementById('scan-haircut-button').classList.add('bg-yellow-600', 'text-white', 'hover:bg-yellow-700');
+                };
+                reader.readAsDataURL(file);
+            } else {
+                haircutImageFile = null;
+                faceMeasurementData = null; // Clear data
+                document.getElementById('haircut-preview').classList.add('hidden');
+                document.getElementById('haircut-placeholder').classList.remove('hidden');
+                document.getElementById('haircut-preview-container').classList.remove('has-image');
+                document.getElementById('scan-haircut-button').disabled = true;
+                document.getElementById('scan-haircut-button').classList.add('bg-gray-700', 'text-gray-400', 'cursor-not-allowed');
+                document.getElementById('scan-haircut-button').classList.remove('bg-yellow-600', 'text-white', 'hover:bg-yellow-700');
+            }
+        }
+        
+        // NEW: Face Shape calculation logic
+        function calculateFaceShape(data) {
+            const ratio = data.ratio;
+            const jaw = parseFloat(data.jaw);
+            const cheekbone = parseFloat(data.cheekbone);
+            const forehead = parseFloat(data.forehead);
+
+            // 1. Check for Square/Round (Length/Width ratio near 1.0 - 1.5)
+            if (ratio >= 1.0 && ratio <= 1.45) {
+                // Square vs Round: Check for angularity (simulated by jaw vs cheek/forehead)
+                if (jaw >= cheekbone * 0.95 && jaw >= forehead * 0.95) {
+                    return 'Square'; // Angular, wide jaw, length = width
+                } else {
+                    return 'Round'; // No prominent features, length = width
+                }
+            }
+
+            // 2. Check for Oval (Length/Width ratio near 1.5 - 1.7)
+            if (ratio > 1.45 && ratio <= 1.7) {
+                 // Check if forehead/jaw are narrower than cheekbones
+                 if (forehead < cheekbone && jaw < cheekbone) {
+                    return 'Oval'; // Length > Width, smooth features
+                 }
+            }
+            
+            // 3. Check for Diamond (High ratio, narrow forehead/jaw, wide cheeks)
+            if (ratio > 1.45) {
+                 if (forehead < jaw * 0.85 && cheekbone > jaw * 1.05) {
+                    return 'Diamond'; // Narrow forehead/jaw, widest at cheekbones
+                 }
+            }
+            
+            // 4. Check for Heart (High ratio, wide forehead, narrow chin)
+            if (ratio > 1.7) {
+                 if (forehead > cheekbone * 0.95 && jaw < cheekbone * 0.8) {
+                    return 'Heart'; // Wide forehead, narrow jaw/chin
+                 }
+            }
+
+            // Default fallback (usually a long variant of Oval or Diamond)
+            return 'Oval'; 
+        }
+
+        function getFaceShapeAndHaircuts() {
+            if (!haircutImageFile || !faceMeasurementData) {
+                showModal("Please upload an image for face shape analysis.", "Image Required");
+                return;
+            }
+
+            const scanButton = document.getElementById('scan-haircut-button');
+            const resultArea = document.getElementById('haircut-result-area');
+            const outputDiv = document.getElementById('haircut-output');
+
+            scanButton.textContent = "Analyzing Face Shape...";
+            scanButton.disabled = true;
+            scanButton.classList.add('animate-pulse');
+
+            // Simulate analysis time
+            setTimeout(() => {
+                // **MODIFIED: Calculate Face Shape based on simulated data**
+                const detectedShape = calculateFaceShape(faceMeasurementData);
+                
+                // Get the corresponding feedback/recommendation
+                const recommendation = faceShapes[detectedShape];
+                
+                outputDiv.innerHTML = `
+                    <div class="text-left max-w-lg mx-auto p-6 bg-[#0d1117] rounded-lg border border-yellow-600 shadow-inner">
+                        <p class="text-xl font-extrabold text-white mb-3">Your Face Shape is: <span class="text-yellow-400">${detectedShape.toUpperCase()}</span></p>
+                        
+                        <h4 class="text-lg font-bold text-gray-300 mt-4 mb-2">Simulated Measurements (Approximate):</h4>
+                        <ul class="text-sm text-gray-400 space-y-1">
+                            <li>Face Length (Vertical): ${faceMeasurementData.length} cm</li>
+                            <li>Face Width (Cheekbones): ${faceMeasurementData.width} cm</li>
+                            <li>Length/Width Ratio: ${faceMeasurementData.ratio.toFixed(2)}</li>
+                            <li>Forehead Width: ${faceMeasurementData.forehead} cm</li>
+                            <li>Jawline Width: ${faceMeasurementData.jaw} cm</li>
+                        </ul>
+                        
+                        <h4 class="text-lg font-bold text-gray-300 mt-4 mb-2">Recommendation:</h4>
+                        <p class="text-gray-300 text-base leading-relaxed">${recommendation}</p>
+                    </div>
+                `;
+                
+                resultArea.classList.remove('hidden');
+                scanButton.textContent = "Scan Face Shape ✂️";
+                scanButton.disabled = false;
+                scanButton.classList.remove('animate-pulse');
+                resultArea.scrollIntoView({ behavior: 'smooth' });
+
+            }, 2500); // Simulate 2.5 seconds analysis
+        }
+
+
+        // --- MODIFIED CORE UI FUNCTIONS (Updated takePhoto for better error handling) ---
+
+        function openCamera(target) {
+            captureTarget = target;
+            cameraModal.classList.remove('hidden');
+            captureButton.disabled = true;
+
+            navigator.mediaDevices.getUserMedia({ video: { facingMode: "user" } })
+                .then(stream => {
+                    currentStream = stream;
+                    videoStream.srcObject = stream;
+                    videoStream.play().then(() => {
+                        captureButton.disabled = false;
+                    });
+                })
+                .catch(err => {
+                    console.error("Error accessing camera:", err);
+                    showModal("Could not access camera. Please ensure permissions are granted.", "Camera Error 🛑");
+                    closeCamera();
+                });
+        }
+
+        async function takePhoto() { // Made function async
+            if (!currentStream) return;
+
+            captureButton.disabled = true;
+            
+            const video = videoStream;
+            const canvas = photoCanvas;
+            const context = canvas.getContext('2d');
+            
+            // Set canvas dimensions to match video
+            canvas.width = video.videoWidth;
+            canvas.height = video.videoHeight;
+            
+            // Mirror the image horizontally
+            context.translate(canvas.width, 0);
+            context.scale(-1, 1);
+            
+            // Draw the current video frame onto the canvas
+            context.drawImage(video, 0, 0, canvas.width, canvas.height);
+
+            // Reset transform for future use
+            context.setTransform(1, 0, 0, 1, 0, 0);
+
+            // Convert canvas image to a Blob
+            canvas.toBlob(async blob => { 
+                const file = new File([blob], "captured_image.png", { type: "image/png" });
+                
+                // Handle haircut section capture separately
+                if (captureTarget === 'haircut') {
+                    // NEW: Generate measurements before setting the file
+                    faceMeasurementData = simulateFaceMeasurements(); 
+                    
+                    const dataTransfer = new DataTransfer();
+                    dataTransfer.items.add(file);
+                    const input = document.getElementById('haircut-upload');
+                    input.files = dataTransfer.files;
+                    handleHaircutInput(input);
+                    closeCamera();
+                    return;
+                } 
+                
+                // Check face detection result BEFORE closing the camera
+                const faceDetected = await checkFaceInImage(file, captureTarget, 'camera');
+
+                if (faceDetected) {
+                    updateInputFiles(file, captureTarget);
+                    updatePreview(file, captureTarget);
+                    closeCamera(); // Only close the camera on successful detection
+                }
+                // If face detection fails, checkFaceInImage handles re-enabling the button and modal message.
+                
+            }, 'image/png');
+        }
+
+
+        function closeCamera() {
+            cameraModal.classList.add('hidden');
+            if (currentStream) {
+                currentStream.getTracks().forEach(track => track.stop());
+                currentStream = null;
+            }
+        }
         
         // Helper function to get a random item from an array
         function getRandomItem(arr) {
@@ -329,7 +728,8 @@
             const eyeFeedback = getRandomItem(eyeAnalysis[eyeData.shape][eyeData.quality]);
             const eyeColor = eyeData.quality === 'high' ? 'text-green-400' : (eyeData.quality === 'medium' ? 'text-yellow-400' : 'text-red-400');
 
-            const faceShapeKey = getRandomItem(Object.keys(faceShapes));
+            // NOTE: The Face Shape logic here is still random as it's separate from the haircut section's calculated shape.
+            const faceShapeKey = getRandomItem(Object.keys(faceShapes)); 
             
             // General Feedback based on component scores
             let generalTips = [];
@@ -432,9 +832,10 @@
             }
         }
 
-        // --- MODIFIED: SIMULATED FACE DETECTION ---
+        // --- MODIFIED: SIMULATED FACE DETECTION (CRITICAL FIX) ---
         function checkFaceInImage(file, target, source) {
             const indicator = document.getElementById(`${target}-face-indicator`);
+            // Only apply the complex logic to the 'front' image in the Aesthetic Scan section
             if (target !== 'front' || !indicator) return Promise.resolve(true); 
 
             // Clear previous indicators and set processing state
@@ -445,7 +846,7 @@
             // Return a promise that resolves true/false after a simulated delay
             return new Promise(resolve => {
                 setTimeout(() => {
-                    // 85% chance of detecting a face (same as before)
+                    // 85% chance of detecting a face 
                     const isDetected = Math.random() < 0.85; 
 
                     if (isDetected) {
@@ -458,13 +859,20 @@
                         indicator.classList.remove('bg-yellow-900', 'text-yellow-300');
                         indicator.classList.add('bg-red-900', 'text-red-300');
                         
+                        // CRITICAL FIX: If face detection fails on a file upload, clear the input/preview
+                        if (source === 'file') {
+                            // This resets the preview and input file list
+                            updatePreview(null, target); 
+                            updateInputFiles(null, target);
+                            checkInputs(); // Re-check button state to disable it
+                        }
+                        
                         // Show the required alert
                         showModal("Please take another picture with your face, ensuring it is well-lit and clearly visible.", "No Face Detected ❌");
                         
                         // If it came from the camera, re-enable the capture button so they can try again
                         if (source === 'camera') {
-                             document.getElementById('capture-button').disabled = false;
-                             // Don't close the camera, let them try again
+                            document.getElementById('capture-button').disabled = false;
                         }
                         
                         resolve(false); // Failure
@@ -507,10 +915,11 @@
                     container.classList.add('has-image');
                     
                     // Face detection is triggered here, but the result is handled in checkFaceInImage
-                    if (target === 'front') checkFaceInImage(file, target); 
+                    if (target === 'front') checkFaceInImage(file, target, 'file'); 
                     else {
-                         const indicator = document.getElementById(`${target}-face-indicator`);
-                         if (indicator) indicator.classList.add('hidden');
+                        // Side profile doesn't have an indicator in the HTML
+                        const indicator = document.getElementById(`${target}-face-indicator`);
+                        if (indicator) indicator.classList.add('hidden');
                     }
                 };
                 reader.readAsDataURL(file);
@@ -532,132 +941,22 @@
                 dataTransfer.items.add(file);
             }
             input.files = dataTransfer.files;
-            
-            updatePreview(file, target);
-            checkInputs();
+
             imageChanged = true;
+            checkInputs();
         }
 
-        function clearInputFiles(target) {
-             const input = document.getElementById(`${target}-upload`);
-             input.value = ''; // Clear file input
-             updatePreview(null, target); // Clear preview
-             checkInputs();
-             imageChanged = true;
-        }
-
-        async function handleFileInput(input, target) {
-            const file = input.files[0];
-            
-            if (file) {
+        function handleFileInput(input, target) {
+            if (input.files && input.files[0]) {
+                const file = input.files[0];
                 updatePreview(file, target);
-                
-                if (target === 'front') {
-                    const isFaceDetected = await checkFaceInImage(file, target, 'upload');
-                    
-                    if (isFaceDetected) {
-                        updateInputFiles(file, target); 
-                    } else {
-                        clearInputFiles(target); 
-                    }
-                } else {
-                    // For side profile, just update the file directly
-                    updateInputFiles(file, target);
-                }
+                imageChanged = true;
             } else {
-                clearInputFiles(target);
+                updatePreview(null, target);
+                imageChanged = true; // Still force re-check
             }
+            checkInputs();
         }
-
-        // --- CAMERA FUNCTIONS ---
-
-        async function openCamera(target) {
-            captureTarget = target;
-            
-            if (currentStream) {
-                currentStream.getTracks().forEach(track => track.stop());
-            }
-
-            cameraModal.classList.remove('hidden');
-            captureButton.disabled = true; 
-            
-            try {
-                const stream = await navigator.mediaDevices.getUserMedia({ 
-                    video: { facingMode: 'user' } 
-                });
-                currentStream = stream;
-                videoStream.srcObject = stream;
-                
-                videoStream.onloadedmetadata = () => {
-                    captureButton.disabled = false;
-                    videoStream.play();
-                };
-
-            } catch (err) {
-                console.error("Error accessing camera: ", err);
-                showModal("Could not access camera. Please ensure your device permits camera access or use the 'Upload File' option.");
-                closeCamera();
-            }
-        }
-
-        function closeCamera() {
-            cameraModal.classList.add('hidden');
-            captureButton.disabled = true;
-            
-            if (currentStream) {
-                currentStream.getTracks().forEach(track => track.stop());
-                currentStream = null;
-            }
-        }
-
-        function takePhoto() {
-            if (!currentStream || !captureTarget) return;
-            
-            const MAX_WIDTH = 800;
-            const videoRatio = videoStream.videoWidth / videoStream.videoHeight;
-            
-            photoCanvas.width = MAX_WIDTH;
-            photoCanvas.height = MAX_WIDTH / videoRatio;
-            
-            const context = photoCanvas.getContext('2d');
-            
-            context.save();
-            context.scale(-1, 1); 
-            
-            context.drawImage(videoStream, 
-                0, 0, videoStream.videoWidth, videoStream.videoHeight,
-                -photoCanvas.width, 0, photoCanvas.width, photoCanvas.height
-            );
-            context.restore();
-            
-            photoCanvas.toBlob((blob) => {
-                const photoFile = new File([blob], `${captureTarget}_profile_${Date.now()}.jpeg`, {
-                    type: 'image/jpeg',
-                    lastModified: Date.now()
-                });
-                
-                // IMPORTANT: Check for face detection BEFORE calling updateInputFiles for the front image
-                if (captureTarget === 'front') {
-                    // CheckFaceInImage returns immediately with a simulated result (true/false)
-                    const isDetected = checkFaceInImage(photoFile, captureTarget);
-                    
-                    if (isDetected) {
-                        updateInputFiles(photoFile, captureTarget);
-                    } else {
-                        // If no face detected, the error modal is shown inside checkFaceInImage 
-                        // and the input is cleared, so we do nothing here but close the camera.
-                    }
-                } else {
-                    // For side profile, just update the file directly
-                    updateInputFiles(photoFile, captureTarget);
-                }
-                
-                closeCamera();
-            }, 'image/jpeg', 0.9);
-        }
-
-        // Initial check on load
-        checkInputs();
     </script>
 </body>
 </html>
